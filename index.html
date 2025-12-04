@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Peaceweaver – Steward Emergence Global Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="A living architecture of citizen-powered peace and stewardship" />
+
+<style>
+/* ============================================================
+   GLOBAL RESET & BASE THEME SYSTEM
+============================================================ */
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Theme: Night Sky (default) */
+  --bg-primary: radial-gradient(circle at top, #1b2740 0, #050712 55%, #020309 100%);
+  --bg-secondary: radial-gradient(circle at top, #151d33 0, #050712 60%);
+  --bg-card: rgba(5,8,18,0.92);
+  --bg-card-hover: rgba(15,20,35,0.95);
+  --text-primary: #f5f5f5;
+  --text-secondary: rgba(245,245,245,0.85);
+  --accent-primary: #f8e48b;
+  --accent-secondary: #f0c34e;
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-accent: rgba(248,228,139,0.45);
+  --shadow-glow: rgba(240,195,78,0.4);
+}
+
+[data-theme="dawn"] {
+  --bg-primary: radial-gradient(circle at top, #ffefd5 0, #ffe4b5 55%, #ffd89b 100%);
+  --bg-secondary: radial-gradient(circle at top, #fff8dc 0, #ffe4b5 60%);
+  --bg-card: rgba(255,250,240,0.92);
+  --bg-card-hover: rgba(255,245,230,0.95);
+  --text-primary: #2c1810;
+  --text-secondary: rgba(44,24,16,0.85);
+  --accent-primary: #d4722f;
+  --accent-secondary: #e88d3f;
+  --border-subtle: rgba(44,24,16,0.12);
+  --border-accent: rgba(212,114,47,0.45);
+  --shadow-glow: rgba(232,141,63,0.4);
+}
+
+[data-theme="forest"] {
+  --bg-primary: radial-gradient(circle at top, #1a3a2e 0, #0f2419 55%, #081610 100%);
+  --bg-secondary: radial-gradient(circle at top, #1e4534 0, #0f2419 60%);
+  --bg-card: rgba(8,22,16,0.92);
+  --bg-card-hover: rgba(20,35,27,0.95);
+  --text-primary: #e8f5e1;
+  --text-secondary: rgba(232,245,225,0.85);
+  --accent-primary: #7fb069;
+  --accent-secondary: #99c77d;
+  --border-subtle: rgba(232,245,225,0.08);
+  --border-accent: rgba(127,176,105,0.45);
+  --shadow-glow: rgba(127,176,105,0.4);
+}
+
+[data-theme="ocean"] {
+  --bg-primary: radial-gradient(circle at top, #1e3a5f 0, #0a1929 55%, #040812 100%);
+  --bg-secondary: radial-gradient(circle at top, #1a4d6d 0, #0a1929 60%);
+  --bg-card: rgba(4,8,18,0.92);
+  --bg-card-hover: rgba(15,25,40,0.95);
+  --text-primary: #e0f2f7;
+  --text-secondary: rgba(224,242,247,0.85);
+  --accent-primary: #4fc3f7;
+  --accent-secondary: #29b6f6;
+  --border-subtle: rgba(224,242,247,0.08);
+  --border-accent: rgba(79,195,247,0.45);
+  --shadow-glow: rgba(79,195,247,0.4);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background 0.6s ease, color 0.6s ease;
+}
+
+/* Chinese font support */
+html[lang="zh"], html[lang="zh"] * {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", system-ui, sans-serif;
+}
+
+/* Cyrillic font support */
+html[lang="ru"], html[lang="ru"] *,
+html[lang="uk"], html[lang="uk"] * {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+}
+
+body {
+  overflow: hidden;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb {
+  background: #26324c;
+  border-radius: 8px;
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus indicators for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 1.2s ease forwards;
+  opacity: 0;
+}
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* ============================================================
+   CONSTELLATION CANVAS
+============================================================ */
+#constellation-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* ============================================================
+   SPLASH SCREEN
+============================================================ */
+#splash {
+  position: absolute;
+  inset: 0;
+  padding: 32px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: radial-gradient(circle at top, #273758 0, #070b16 55%, #03040a 100%);
+  transition: opacity 1s ease;
+  z-index: 1000;
+}
+
+#splash h1 {
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin: 0 0 12px;
+  text-shadow: 0 0 20px rgba(248,228,139,0.5);
+}
+
+#splash .subtitle {
+  font-size: 1rem;
+  max-width: 700px;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin-bottom: 16px;
+}
+
+#priority-banner {
+  margin-top: 20px;
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f9e7aa;
+  border: 1px solid rgba(249,231,170,0.45);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(249,231,170,0.05);
+}
+
+#splash-stats {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#splash-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#splash-stats .stat-number {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+#splash button {
+  margin-top: 32px;
+  padding: 14px 36px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  color: #0b0f1a;
+  background: linear-gradient(135deg, #f3da7a, #f0c34e);
+  box-shadow: 0 0 30px rgba(240,195,78,0.4);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+#splash button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 35px rgba(240,195,78,0.7);
+}
+
+/* ============================================================
+   APP LAYOUT
+============================================================ */
+#app {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+/* Top bar */
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(6,10,23,0.96);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 20% 0%, #f8e48b 0, #f0c34e 25%, #26314a 70%, #040610 100%);
+  box-shadow: 0 0 16px var(--shadow-glow);
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+#brand-logo:hover {
+  transform: rotate(180deg) scale(1.1);
+}
+#brand-text {
+  display: flex;
+  flex-direction: column;
+}
+#brand-text span:first-child {
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+#brand-text span:last-child {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Controls */
+#top-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-ghost {
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(13,18,36,0.8);
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+.btn-ghost:hover {
+  background: rgba(35,47,83,0.9);
+  border-color: var(--border-accent);
+}
+
+.btn-ghost.active {
+  border-color: var(--accent-primary);
+  background: rgba(248,228,139,0.15);
+}
+
+#steward-name-input {
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(5,7,15,0.96);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  min-width: 160px;
+}
+
+#steward-status {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Main split */
+#main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* Left column */
+#left-column {
+  width: 280px;
+  min-width: 240px;
+  max-width: 340px;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+#tab-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tab-btn {
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.tab-btn span.label {
+  flex: 1;
+}
+.tab-btn span.badge {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(248,228,139,0.08);
+  color: var(--accent-primary);
+}
+.tab-btn.active {
+  border-color: var(--border-accent);
+  background: radial-gradient(circle at top left, rgba(248,228,139,0.2), var(--bg-card));
+  transform: translateX(4px);
+}
+
+/* Ritual card */
+#ritual-card {
+  margin-top: 16px;
+  padding: 12px 14px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-accent);
+  background: radial-gradient(circle at top, rgba(248,228,139,0.16), var(--bg-card));
+  font-size: 0.8rem;
+}
+#ritual-card h3 {
+  margin: 0 0 8px;
+  font-size: 0.88rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+#candle {
+  margin-top: 8px;
+  width: 40px;
+  height: 70px;
+  border-radius: 20px/35px;
+  background: radial-gradient(circle at 50% 0, rgba(255,255,255,0.9) 0, #ffd37b 24%, #a86a2e 70%, #502714 100%);
+  position: relative;
+  margin-inline: auto;
+  box-shadow: 0 0 18px var(--shadow-glow);
+}
+#flame {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 32px;
+  border-radius: 50% 50% 50% 50%;
+  background: radial-gradient(circle at 30% 0%, #fff 0, #ffe6a9 30%, #ffb347 65%, #f06b1b 100%);
+  opacity: 0;
+  transform-origin: bottom center;
+  filter: blur(1px);
+}
+#flame.lit {
+  opacity: 1;
+  animation: flameDance 1.4s ease-in-out infinite;
+}
+@keyframes flameDance {
+  0% { transform: translateX(-50%) scale(1) rotate(0deg); }
+  35% { transform: translateX(-48%) scale(1.06,0.96) rotate(-4deg); }
+  70% { transform: translateX(-52%) scale(0.96,1.05) rotate(3deg); }
+  100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+}
+#ritual-button {
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 999px;
+  border: none;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(10,14,30,0.96);
+  color: var(--text-primary);
+  transition: background 0.2s ease;
+}
+#ritual-button:hover:not(:disabled) {
+  background: rgba(20,26,45,0.96);
+}
+#ritual-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+#ritual-note {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  opacity: 0.8;
+  text-align: center;
+}
+
+#candle-count {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  opacity: 0.85;
+  color: var(--accent-primary);
+}
+
+/* Right column */
+#right-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Panel header */
+#panel-header {
+  padding: 10px 16px 6px;
+  font-size: 0.78rem;
+  opacity: 0.8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Panels */
+#panels {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+#panel-main {
+  flex: 2;
+  min-width: 0;
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-subtle);
+}
+
+#panel-detail {
+  flex: 1;
+  min-width: 0;
+  padding: 16px 18px 20px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+}
+
+/* Search */
+#search-container {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+#module-search {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+/* Filter chips */
+#filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.filter-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-chip.active {
+  border-color: var(--accent-primary);
+  background: rgba(248,228,139,0.15);
+  color: var(--accent-primary);
+}
+
+/* Typography */
+h2.section-title {
+  font-size: 1.5rem;
+  margin: 0 0 8px;
+}
+p.section-subtitle {
+  font-size: 0.92rem;
+  opacity: 0.85;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+/* Module grid */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.module-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  padding: 12px 14px 14px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  border-color: var(--border-accent);
+}
+
+.module-card.visited {
+  border-color: rgba(127,176,105,0.4);
+}
+
+.module-card.visited::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #7fb069;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.module-card h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+.module-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.84;
+  line-height: 1.4;
+}
+.module-tag {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  margin-bottom: 4px;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+}
+
+/* Detail panel */
+#detail-title {
+  font-size: 1.15rem;
+  margin: 0 0 6px;
+}
+#detail-tag {
+  font-size: 0.76rem;
+  opacity: 0.78;
+  margin-bottom: 10px;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+}
+#detail-body {
+  font-size: 0.84rem;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+/* Toast notifications */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-accent);
+  background: var(--bg-card);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  font-size: 0.85rem;
+  max-width: 300px;
+  animation: toastSlideIn 0.3s ease;
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Zero Harm Footer */
+#zero-harm-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 16px;
+  background: rgba(6,10,23,0.98);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.7rem;
+  opacity: 0.8;
+  text-align: center;
+  z-index: 100;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  #panels {
+    flex-direction: column;
+  }
+  #panel-main {
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+
+@media (max-width: 768px) {
+  #main {
+    flex-direction: column;
+  }
+  #left-column {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  #tab-buttons {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  .tab-btn {
+    min-width: 140px;
+    white-space: nowrap;
+  }
+  #ritual-card {
+    min-width: 220px;
+  }
+  .module-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body data-theme="night-sky">
+
+<canvas id="constellation-canvas"></canvas>
+
+<!-- SPLASH -->
+<div id="splash" class="fade-in">
+  <h1 id="splash-title">PEACEWEAVER</h1>
+  <div class="subtitle" id="splash-subtitle"></div>
+  <div id="splash-stats">
+    <div>
+      <div class="stat-number">62</div>
+      <div id="splash-stat-1"></div>
+    </div>
+    <div>
+      <div class="stat-number">∞</div>
+      <div id="splash-stat-2"></div>
+    </div>
+    <div>
+      <div class="stat-number">1</div>
+      <div id="splash-stat-3"></div>
+    </div>
+  </div>
+  <div id="priority-banner"></div>
+  <button id="enter-btn"></button>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="top-bar">
+    <div id="brand">
+      <div id="brand-logo" role="button" tabindex="0" aria-label="Return to overview"></div>
+      <div id="brand-text">
+        <span id="brand-name">PEACEWEAVER</span>
+        <span id="brand-tagline"></span>
+      </div>
+    </div>
+    <div id="top-controls">
+      <button class="btn-ghost" id="theme-btn">🎨</button>
+      <button class="btn-ghost lang-btn" data-lang="en">EN</button>
+      <button class="btn-ghost lang-btn" data-lang="ru">RU</button>
+      <button class="btn-ghost lang-btn" data-lang="uk">UA</button>
+      <button class="btn-ghost lang-btn" data-lang="zh">中文</button>
+      <input id="steward-name-input" type="text" aria-label="Steward name" />
+      <span id="steward-status"></span>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="left-column">
+      <div id="tab-buttons" role="tablist"></div>
+      
+      <div id="ritual-card">
+        <h3 id="ritual-title"></h3>
+        <p id="ritual-desc"></p>
+        <div id="candle">
+          <div id="flame"></div>
+        </div>
+        <button id="ritual-button"></button>
+        <div id="candle-count"><span id="candle-label"></span> <span id="global-candle-count">12,847</span></div>
+        <div id="ritual-note"></div>
+      </div>
+    </div>
+
+    <div id="right-column">
+      <div id="panel-header">
+        <div id="breadcrumb"></div>
+        <div><span id="visit-label"></span> <span id="visit-count">0</span>/62</div>
+      </div>
+      <div id="panels">
+        <div id="panel-main"></div>
+        <div id="panel-detail">
+          <h3 id="detail-title"></h3>
+          <div id="detail-tag"></div>
+          <div id="detail-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" aria-live="polite"></div>
+
+<div id="zero-harm-footer">
+  <strong id="footer-title"></strong> <span id="footer-text"></span>
+</div>
+
+<script>
+/* ============================================================
+   COMPREHENSIVE TRANSLATION SYSTEM
+============================================================ */
+const translations = {
+  en: {
+    // Splash screen
+    splashTitle: "PEACEWEAVER",
+    splashSubtitle: "A living architecture of citizen-powered peace and stewardship,\nweaving together Russia, Ukraine, and the wider world through\necology, story, culture, and shared futures.",
+    splashStat1: "Peace Modules",
+    splashStat2: "Steward Paths",
+    splashStat3: "Shared Future",
+    priorityBanner: "PRIORITY ONE • HUMANITARIAN STEWARD EMERGENCE PROJECT • ACTIVE DEVELOPMENT",
+    enterBtn: "Enter the Steward Dashboard",
+    
+    // Top bar
+    brandTagline: "Steward Emergence Global Dashboard",
+    stewardPlaceholder: "Your steward name (optional)",
+    
+    // Tabs
+    tabOverview: "Overview & Manifesto",
+    tabModules: "Peace Modules",
+    tabSteward: "Steward Path",
+    tabSignals: "Signals & Futures",
+    tabAbout: "About & Guide",
+    
+    // Ritual
+    ritualTitle: "Shared Candle Ritual",
+    ritualDesc: "One shared flame for every life touched by conflict. Light it once; let it burn for all.",
+    ritualButton: "Light the candle",
+    ritualButtonLit: "Candle is lit",
+    candleLabel: "Global candles lit:",
+    ritualNote: "Your candle state is stored locally in your browser.",
+    
+    // Panel
+    breadcrumbOverview: "Tab: Overview & Manifesto",
+    breadcrumbModules: "Tab: Peace Modules",
+    breadcrumbSteward: "Tab: Steward Path",
+    breadcrumbSignals: "Tab: Signals & Futures",
+    breadcrumbAbout: "Tab: About & Guide",
+    visitLabel: "Explored:",
+    
+    // Detail panel default
+    detailTitleDefault: "Module Detail",
+    detailTagDefault: "Select a module to see how it works",
+    detailBodyDefault: "This panel is a live window into any peace module in the system. Click a card to view its purpose, stewardship pattern, and a suggested expansion path for future developers, facilitators, or AI co-authors.",
+    
+    // Footer
+    footerTitle: "Zero Harm & Anti-Coercion:",
+    footerText: "This tool contains no tracking, no surveillance, no hidden telemetry. All data stored locally. Built for planetary restoration, not extraction.",
+    
+    // Overview content
+    overviewTitle: "Steward Emergence, Not Just Ceasefire",
+    overviewIntro: "This prototype is a living sketch of a world where peace is not a distant treaty between governments, but a daily pattern of behavior chosen by ordinary people.",
+    overviewContext: "It began as a framework to re-weave trust between Russia and Ukraine through ecology, culture, story, and shared futures—and naturally extends to any place where neighbors have been taught to fear each other.",
+    
+    // Categories
+    catEcology: "Ecology & Biosphere",
+    catCulture: "Culture & Myth",
+    catHealing: "Healing & Vulnerability",
+    catCitizen: "Citizen Agency",
+    catMemory: "Memory & Remembrance",
+    catFutures: "Long-Horizon Futures",
+    catCrisis: "Crisis Response",
+    catStory: "Story & Narrative",
+    catSteward: "Steward Emergence",
+    catSociotech: "Socio-Technical Tools",
+    catMythic: "Mythic & Symbolic",
+    catCommons: "Commons & Learning",
+    catMeta: "Meta-Leadership",
+    
+    // Toast messages
+    toastCandleLit: "Your candle burns for all who suffer",
+    toastLanguageChanged: "Language changed",
+    toastThemeChanged: "Theme changed",
+  },
+  
+  ru: {
+    // Splash screen
+    splashTitle: "МИРОТВОРЕЦ",
+    splashSubtitle: "Живая архитектура мира и управления силами граждан,\nсвязывающая Россию, Украину и весь мир через\nэкологию, истории, культуру и общее будущее.",
+    splashStat1: "Модулей Мира",
+    splashStat2: "Путей Хранителя",
+    splashStat3: "Общее Будущее",
+    priorityBanner: "ПРИОРИТЕТ ПЕРВЫЙ • ГУМАНИТАРНЫЙ ПРОЕКТ СТАНОВЛЕНИЯ ХРАНИТЕЛЕЙ • АКТИВНАЯ РАЗРАБОТКА",
+    enterBtn: "Войти в панель управления хранителя",
+    
+    // Top bar
+    brandTagline: "Глобальная панель становления хранителей",
+    stewardPlaceholder: "Ваше имя хранителя (необязательно)",
+    
+    // Tabs
+    tabOverview: "Обзор и манифест",
+    tabModules: "Модули мира",
+    tabSteward: "Путь хранителя",
+    tabSignals: "Сигналы и будущее",
+    tabAbout: "О проекте",
+    
+    // Ritual
+    ritualTitle: "Общий ритуал свечи",
+    ritualDesc: "Одно общее пламя за каждую жизнь, затронутую конфликтом. Зажгите один раз; пусть горит для всех.",
+    ritualButton: "Зажечь свечу",
+    ritualButtonLit: "Свеча зажжена",
+    candleLabel: "Зажжено свечей по всему миру:",
+    ritualNote: "Состояние вашей свечи хранится локально в вашем браузере.",
+    
+    // Panel
+    breadcrumbOverview: "Вкладка: Обзор и манифест",
+    breadcrumbModules: "Вкладка: Модули мира",
+    breadcrumbSteward: "Вкладка: Путь хранителя",
+    breadcrumbSignals: "Вкладка: Сигналы и будущее",
+    breadcrumbAbout: "Вкладка: О проекте",
+    visitLabel: "Исследовано:",
+    
+    // Detail panel default
+    detailTitleDefault: "Детали модуля",
+    detailTagDefault: "Выберите модуль, чтобы увидеть, как он работает",
+    detailBodyDefault: "Эта панель - живое окно в любой модуль мира в системе. Нажмите на карточку, чтобы просмотреть её цель, схему управления и предлагаемый путь расширения для будущих разработчиков, фасилитаторов или ИИ-соавторов.",
+    
+    // Footer
+    footerTitle: "Нулевой вред и анти-принуждение:",
+    footerText: "Этот инструмент не содержит отслеживания, наблюдения, скрытой телеметрии. Все данные хранятся локально. Создан для восстановления планеты, а не эксплуатации.",
+    
+    // Overview content
+    overviewTitle: "Становление хранителей, а не просто перемирие",
+    overviewIntro: "Этот прототип - живой набросок мира, где мир - это не далёкий договор между правительствами, а ежедневный образ поведения, выбранный обычными людьми.",
+    overviewContext: "Он начался как основа для восстановления доверия между Россией и Украиной через экологию, культуру, истории и общее будущее - и естественным образом распространяется на любое место, где соседей научили бояться друг друга.",
+    
+    // Categories
+    catEcology: "Экология и биосфера",
+    catCulture: "Культура и миф",
+    catHealing: "Исцеление и уязвимость",
+    catCitizen: "Гражданская активность",
+    catMemory: "Память и воспоминание",
+    catFutures: "Долгосрочное будущее",
+    catCrisis: "Реагирование на кризис",
+    catStory: "История и повествование",
+    catSteward: "Становление хранителя",
+    catSociotech: "Социотехнические инструменты",
+    catMythic: "Мифическое и символическое",
+    catCommons: "Общие блага и обучение",
+    catMeta: "Мета-лидерство",
+    
+    // Toast messages
+    toastCandleLit: "Ваша свеча горит за всех, кто страдает",
+    toastLanguageChanged: "Язык изменён",
+    toastThemeChanged: "Тема изменена",
+  },
+  
+  uk: {
+    // Splash screen
+    splashTitle: "МИРОТВОРЕЦЬ",
+    splashSubtitle: "Жива архітектура миру та управління силами громадян,\nяка зв'язує Росію, Україну та весь світ через\nекологію, історії, культуру та спільне майбутнє.",
+    splashStat1: "Модулів Миру",
+    splashStat2: "Шляхів Хранителя",
+    splashStat3: "Спільне Майбутнє",
+    priorityBanner: "ПРІОРИТЕТ ПЕРШИЙ • ГУМАНІТАРНИЙ ПРОЕКТ СТАНОВЛЕННЯ ХРАНИТЕЛІВ • АКТИВНА РОЗРОБКА",
+    enterBtn: "Увійти до панелі керування хранителя",
+    
+    // Top bar
+    brandTagline: "Глобальна панель становлення хранителів",
+    stewardPlaceholder: "Ваше ім'я хранителя (необов'язково)",
+    
+    // Tabs
+    tabOverview: "Огляд і маніфест",
+    tabModules: "Модулі миру",
+    tabSteward: "Шлях хранителя",
+    tabSignals: "Сигнали та майбутнє",
+    tabAbout: "Про проект",
+    
+    // Ritual
+    ritualTitle: "Спільний ритуал свічки",
+    ritualDesc: "Одне спільне полум'я за кожне життя, зачеплене конфліктом. Запаліть один раз; нехай горить для всіх.",
+    ritualButton: "Запалити свічку",
+    ritualButtonLit: "Свічку запалено",
+    candleLabel: "Запалено свічок у всьому світі:",
+    ritualNote: "Стан вашої свічки зберігається локально у вашому браузері.",
+    
+    // Panel
+    breadcrumbOverview: "Вкладка: Огляд і маніфест",
+    breadcrumbModules: "Вкладка: Модулі миру",
+    breadcrumbSteward: "Вкладка: Шлях хранителя",
+    breadcrumbSignals: "Вкладка: Сигнали та майбутнє",
+    breadcrumbAbout: "Вкладка: Про проект",
+    visitLabel: "Досліджено:",
+    
+    // Detail panel default
+    detailTitleDefault: "Деталі модуля",
+    detailTagDefault: "Виберіть модуль, щоб побачити, як він працює",
+    detailBodyDefault: "Ця панель - живе вікно в будь-який модуль миру в системі. Натисніть на картку, щоб переглянути її мету, схему управління та запропонований шлях розширення для майбутніх розробників, фасилітаторів або ШІ-співавторів.",
+    
+    // Footer
+    footerTitle: "Нульова шкода і анти-примус:",
+    footerText: "Цей інструмент не містить відстеження, спостереження, прихованої телеметрії. Всі дані зберігаються локально. Створений для відновлення планети, а не експлуатації.",
+    
+    // Overview content
+    overviewTitle: "Становлення хранителів, а не просто перемир'я",
+    overviewIntro: "Цей прототип - живий нарис світу, де мир - це не далека угода між урядами, а щоденний зразок поведінки, обраний звичайними людьми.",
+    overviewContext: "Він почався як основа для відновлення довіри між Росією та Україною через екологію, культуру, історії та спільне майбутнє - і природно поширюється на будь-яке місце, де сусідів навчили боятися один одного.",
+    
+    // Categories
+    catEcology: "Екологія та біосфера",
+    catCulture: "Культура і міф",
+    catHealing: "Зцілення та вразливість",
+    catCitizen: "Громадянська активність",
+    catMemory: "Пам'ять і спогад",
+    catFutures: "Довгострокове майбутнє",
+    catCrisis: "Реагування на кризу",
+    catStory: "Історія та оповідання",
+    catSteward: "Становлення хранителя",
+    catSociotech: "Соціотехнічні інструменти",
+    catMythic: "Міфічне і символічне",
+    catCommons: "Спільні блага і навчання",
+    catMeta: "Мета-лідерство",
+    
+    // Toast messages
+    toastCandleLit: "Ваша свічка горить за всіх, хто страждає",
+    toastLanguageChanged: "Мову змінено",
+    toastThemeChanged: "Тему змінено",
+  },
+  
+  zh: {
+    // Splash screen
+    splashTitle: "和平织者",
+    splashSubtitle: "一个由公民推动的和平与管理的活体架构，\n通过生态、故事、文化和共同未来，\n将俄罗斯、乌克兰和更广阔的世界编织在一起。",
+    splashStat1: "和平模块",
+    splashStat2: "守护者之路",
+    splashStat3: "共同未来",
+    priorityBanner: "第一优先级 • 人道主义守护者涌现项目 • 积极开发中",
+    enterBtn: "进入守护者仪表板",
+    
+    // Top bar
+    brandTagline: "守护者涌现全球仪表板",
+    stewardPlaceholder: "您的守护者名字（可选）",
+    
+    // Tabs
+    tabOverview: "概览与宣言",
+    tabModules: "和平模块",
+    tabSteward: "守护者之路",
+    tabSignals: "信号与未来",
+    tabAbout: "关于与指南",
+    
+    // Ritual
+    ritualTitle: "共享蜡烛仪式",
+    ritualDesc: "一个共享的火焰，为每一个被冲突触及的生命而燃。点燃一次；让它为所有人燃烧。",
+    ritualButton: "点燃蜡烛",
+    ritualButtonLit: "蜡烛已点燃",
+    candleLabel: "全球已点燃蜡烛：",
+    ritualNote: "您的蜡烛状态存储在您的浏览器本地。",
+    
+    // Panel
+    breadcrumbOverview: "标签页：概览与宣言",
+    breadcrumbModules: "标签页：和平模块",
+    breadcrumbSteward: "标签页：守护者之路",
+    breadcrumbSignals: "标签页：信号与未来",
+    breadcrumbAbout: "标签页：关于与指南",
+    visitLabel: "已探索：",
+    
+    // Detail panel default
+    detailTitleDefault: "模块详情",
+    detailTagDefault: "选择一个模块查看其工作原理",
+    detailBodyDefault: "此面板是系统中任何和平模块的实时窗口。点击卡片查看其目的、管理模式以及为未来开发者、促进者或AI共同作者建议的扩展路径。",
+    
+    // Footer
+    footerTitle: "零伤害与反胁迫：",
+    footerText: "此工具不包含跟踪、监视、隐藏遥测。所有数据本地存储。为星球恢复而建，而非开采。",
+    
+    // Overview content
+    overviewTitle: "守护者涌现，而非仅仅停火",
+    overviewIntro: "这个原型是一个世界的活体草图，在这个世界中，和平不是政府之间遥远的条约，而是普通人选择的日常行为模式。",
+    overviewContext: "它开始作为一个框架，通过生态、文化、故事和共同未来重新编织俄罗斯和乌克兰之间的信任——并自然延伸到任何邻居被教导要害怕彼此的地方。",
+    
+    // Categories
+    catEcology: "生态与生物圈",
+    catCulture: "文化与神话",
+    catHealing: "疗愈与脆弱",
+    catCitizen: "公民能动性",
+    catMemory: "记忆与纪念",
+    catFutures: "长远未来",
+    catCrisis: "危机应对",
+    catStory: "故事与叙事",
+    catSteward: "守护者涌现",
+    catSociotech: "社会技术工具",
+    catMythic: "神话与象征",
+    catCommons: "公共资源与学习",
+    catMeta: "元领导力",
+    
+    // Toast messages
+    toastCandleLit: "您的蜡烛为所有受苦之人燃烧",
+    toastLanguageChanged: "语言已更改",
+    toastThemeChanged: "主题已更改",
+  }
+};
+
+// Module translations
+const moduleTranslations = {
+  en: {
+    biospheric_cascades: {
+      title: "Biospheric Cascades Dashboard",
+      summary: "Ecological diplomacy through shared forests, rivers, orchards, and restoration corridors linking communities across borders."
+    },
+    mycelial_diplomacy: {
+      title: "Mycelial Diplomacy Engine",
+      summary: "Fungi as diplomats: soil healing, spore bridges, and mycelial metaphors that reconnect wounded landscapes and peoples."
+    },
+    seed_corridor_planner: {
+      title: "Seed Corridor Planner",
+      summary: "Plan cross-border fruit tree and berry corridors to nourish travelers, wildlife, and future generations."
+    },
+    // ... Additional modules would be added here
+  },
+  ru: {
+    biospheric_cascades: {
+      title: "Панель биосферных каскадов",
+      summary: "Экологическая дипломатия через общие леса, реки, сады и восстановительные коридоры, связывающие сообщества через границы."
+    },
+    mycelial_diplomacy: {
+      title: "Мицелиальная дипломатия",
+      summary: "Грибы как дипломаты: исцеление почвы, споровые мосты и мицелиальные метафоры, которые воссоединяют раненые ландшафты и народы."
+    },
+    seed_corridor_planner: {
+      title: "Планировщик семенных коридоров",
+      summary: "Планируйте трансграничные коридоры фруктовых деревьев и ягод, чтобы питать путешественников, дикую природу и будущие поколения."
+    },
+  },
+  uk: {
+    biospheric_cascades: {
+      title: "Панель біосферних каскадів",
+      summary: "Екологічна дипломатія через спільні ліси, ріки, сади та відновлювальні коридори, що зв'язують спільноти через кордони."
+    },
+    mycelial_diplomacy: {
+      title: "Міцеліальна дипломатія",
+      summary: "Гриби як дипломати: зцілення ґрунту, спорові мости та міцеліальні метафори, які возз'єднують поранені ландшафти та народи."
+    },
+    seed_corridor_planner: {
+      title: "Планувальник насіннєвих коридорів",
+      summary: "Плануйте транскордонні коридори фруктових дерев та ягід, щоб годувати мандрівників, дику природу та майбутні покоління."
+    },
+  },
+  zh: {
+    biospheric_cascades: {
+      title: "生物圈级联仪表板",
+      summary: "通过跨境连接社区的共享森林、河流、果园和恢复走廊进行生态外交。"
+    },
+    mycelial_diplomacy: {
+      title: "菌丝外交引擎",
+      summary: "真菌作为外交官：土壤治疗、孢子桥梁和菌丝隐喻，重新连接受伤的景观和人民。"
+    },
+    seed_corridor_planner: {
+      title: "种子走廊规划器",
+      summary: "规划跨境果树和浆果走廊，为旅行者、野生动物和后代提供营养。"
+    },
+  }
+};
+
+/* ============================================================
+   TRANSLATION SYSTEM
+============================================================ */
+let currentLang = 'en';
+
+function t(key, lang = currentLang) {
+  return translations[lang]?.[key] || translations.en[key] || key;
+}
+
+function tm(moduleId, field, lang = currentLang) {
+  return moduleTranslations[lang]?.[moduleId]?.[field] || 
+         moduleTranslations.en[moduleId]?.[field] || '';
+}
+
+function applyTranslations() {
+  // Update HTML lang attribute
+  document.documentElement.lang = currentLang;
+  
+  // Splash
+  document.getElementById('splash-subtitle').textContent = t('splashSubtitle');
+  document.getElementById('splash-stat-1').textContent = t('splashStat1');
+  document.getElementById('splash-stat-2').textContent = t('splashStat2');
+  document.getElementById('splash-stat-3').textContent = t('splashStat3');
+  document.getElementById('priority-banner').textContent = t('priorityBanner');
+  document.getElementById('enter-btn').textContent = t('enterBtn');
+  
+  // Top bar
+  document.getElementById('brand-tagline').textContent = t('brandTagline');
+  document.getElementById('steward-name-input').placeholder = t('stewardPlaceholder');
+  
+  // Tabs
+  updateTabs();
+  
+  // Ritual
+  document.getElementById('ritual-title').textContent = t('ritualTitle');
+  document.getElementById('ritual-desc').textContent = t('ritualDesc');
+  const ritualBtn = document.getElementById('ritual-button');
+  ritualBtn.textContent = state?.candleLit ? t('ritualButtonLit') : t('ritualButton');
+  document.getElementById('candle-label').textContent = t('candleLabel');
+  document.getElementById('ritual-note').textContent = t('ritualNote');
+  
+  // Panel
+  updateBreadcrumb();
+  document.getElementById('visit-label').textContent = t('visitLabel');
+  
+  // Detail panel
+  document.getElementById('detail-title').textContent = t('detailTitleDefault');
+  document.getElementById('detail-tag').textContent = t('detailTagDefault');
+  document.getElementById('detail-body').textContent = t('detailBodyDefault');
+  
+  // Footer
+  document.getElementById('footer-title').textContent = t('footerTitle');
+  document.getElementById('footer-text').textContent = t('footerText');
+  
+  // Update active lang button
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === currentLang);
+  });
+  
+  // Re-render current tab content
+  if (currentTab) {
+    setTab(currentTab);
+  }
+}
+
+function updateTabs() {
+  const tabsContainer = document.getElementById('tab-buttons');
+  tabsContainer.innerHTML = `
+    <button class="tab-btn active" data-tab="overview" role="tab">
+      <span class="label">${t('tabOverview')}</span>
+      <span class="badge">1</span>
+    </button>
+    <button class="tab-btn" data-tab="modules" role="tab">
+      <span class="label">${t('tabModules')}</span>
+      <span class="badge">62</span>
+    </button>
+    <button class="tab-btn" data-tab="steward" role="tab">
+      <span class="label">${t('tabSteward')}</span>
+      <span class="badge">∞</span>
+    </button>
+    <button class="tab-btn" data-tab="signals" role="tab">
+      <span class="label">${t('tabSignals')}</span>
+      <span class="badge">⧖</span>
+    </button>
+    <button class="tab-btn" data-tab="about" role="tab">
+      <span class="label">${t('tabAbout')}</span>
+      <span class="badge">α</span>
+    </button>
+  `;
+  
+  // Re-attach tab events
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => setTab(btn.dataset.tab));
+  });
+}
+
+function updateBreadcrumb() {
+  const breadcrumbMap = {
+    overview: 'breadcrumbOverview',
+    modules: 'breadcrumbModules',
+    steward: 'breadcrumbSteward',
+    signals: 'breadcrumbSignals',
+    about: 'breadcrumbAbout'
+  };
+  const key = breadcrumbMap[currentTab] || 'breadcrumbOverview';
+  document.getElementById('breadcrumb').textContent = t(key);
+}
+
+/* ============================================================
+   CONSTELLATION ANIMATION
+============================================================ */
+(function initConstellation() {
+  const canvas = document.getElementById('constellation-canvas');
+  const ctx = canvas.getContext('2d');
+  
+  let width = canvas.width = window.innerWidth;
+  let height = canvas.height = window.innerHeight;
+  
+  const particles = [];
+  const particleCount = 80;
+  const connectionDistance = 150;
+  
+  class Particle {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.5;
+      this.vy = (Math.random() - 0.5) * 0.5;
+      this.radius = Math.random() * 2 + 1;
+    }
+    
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      
+      if (this.x < 0 || this.x > width) this.vx *= -1;
+      if (this.y < 0 || this.y > height) this.vy *= -1;
+    }
+    
+    draw() {
+      ctx.fillStyle = 'rgba(248, 228, 139, 0.6)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
+  }
+  
+  function connectParticles() {
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < connectionDistance) {
+          const opacity = (1 - distance / connectionDistance) * 0.3;
+          ctx.strokeStyle = `rgba(248, 228, 139, ${opacity})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+  
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+    
+    particles.forEach(p => {
+      p.update();
+      p.draw();
+    });
+    
+    connectParticles();
+    requestAnimationFrame(animate);
+  }
+  
+  window.addEventListener('resize', () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+  
+  animate();
+})();
+
+/* ============================================================
+   STATE MANAGEMENT
+============================================================ */
+function getDefaultState() {
+  return {
+    visited: [],
+    candleLit: false,
+    stewardName: "",
+    theme: "night-sky",
+    lang: "en",
+    lastVisit: Date.now(),
+    visitCount: 0
+  };
+}
+
+function loadState() {
+  try {
+    const stored = localStorage.getItem("peaceweaver_state_v2");
+    if (stored) {
+      return Object.assign(getDefaultState(), JSON.parse(stored));
+    }
+  } catch (e) {
+    console.warn("Could not load state:", e);
+  }
+  return getDefaultState();
+}
+
+function saveState(newState) {
+  state = Object.assign(state || {}, newState);
+  try {
+    localStorage.setItem("peaceweaver_state_v2", JSON.stringify(state));
+  } catch (e) {
+    console.warn("Could not save state:", e);
+  }
+}
+
+let state = loadState();
+let currentTab = 'overview';
+
+/* ============================================================
+   SIMPLE MODULE DATA
+============================================================ */
+const modules = [
+  { id: "biospheric_cascades", category: "Ecology & Biosphere" },
+  { id: "mycelial_diplomacy", category: "Ecology & Biosphere" },
+  { id: "seed_corridor_planner", category: "Ecology & Biosphere" },
+  // Add more module IDs here - translations will be loaded from moduleTranslations
+];
+
+/* ============================================================
+   TOAST NOTIFICATIONS
+============================================================ */
+function showToast(messageKey) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = t(messageKey);
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+/* ============================================================
+   TAB RENDERING
+============================================================ */
+function setTab(tab) {
+  currentTab = tab;
+  
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  
+  updateBreadcrumb();
+  
+  const panelMain = document.getElementById('panel-main');
+  
+  switch (tab) {
+    case 'overview':
+      renderOverview(panelMain);
+      break;
+    case 'modules':
+      renderModules(panelMain);
+      break;
+    case 'steward':
+      renderSteward(panelMain);
+      break;
+    case 'signals':
+      renderSignals(panelMain);
+      break;
+    case 'about':
+      renderAbout(panelMain);
+      break;
+  }
+}
+
+function renderOverview(container) {
+  container.innerHTML = `
+    <h2 class="section-title">${t('overviewTitle')}</h2>
+    <p class="section-subtitle">${t('overviewIntro')}</p>
+    <p class="section-subtitle">${t('overviewContext')}</p>
+  `;
+}
+
+function renderModules(container) {
+  container.innerHTML = '<div id="search-container"></div><div id="filter-chips"></div><div class="module-grid"></div>';
+  
+  const grid = container.querySelector('.module-grid');
+  
+  modules.forEach(mod => {
+    const card = document.createElement('div');
+    card.className = 'module-card';
+    if (state.visited.includes(mod.id)) {
+      card.classList.add('visited');
+    }
+    
+    card.innerHTML = `
+      <div class="module-tag">${t('cat' + mod.category.replace(/\s+/g, '').replace(/&/g, ''))}</div>
+      <h3>${tm(mod.id, 'title')}</h3>
+      <p>${tm(mod.id, 'summary')}</p>
+    `;
+    
+    card.addEventListener('click', () => {
+      recordVisit(mod.id);
+      showModuleDetail(mod);
+    });
+    
+    grid.appendChild(card);
+  });
+}
+
+function renderSteward(container) {
+  container.innerHTML = `
+    <h2 class="section-title">${t('tabSteward')}</h2>
+    <p class="section-subtitle">Content for steward path...</p>
+  `;
+}
+
+function renderSignals(container) {
+  container.innerHTML = `
+    <h2 class="section-title">${t('tabSignals')}</h2>
+    <p class="section-subtitle">Content for signals and futures...</p>
+  `;
+}
+
+function renderAbout(container) {
+  container.innerHTML = `
+    <h2 class="section-title">${t('tabAbout')}</h2>
+    <p class="section-subtitle">Content about the project...</p>
+  `;
+}
+
+function showModuleDetail(mod) {
+  document.getElementById('detail-title').textContent = tm(mod.id, 'title');
+  document.getElementById('detail-tag').textContent = t('cat' + mod.category.replace(/\s+/g, '').replace(/&/g, ''));
+  document.getElementById('detail-body').innerHTML = `<p>${tm(mod.id, 'summary')}</p>`;
+}
+
+function recordVisit(id) {
+  if (!state.visited.includes(id)) {
+    state.visited.push(id);
+    saveState(state);
+    updateVisitCount();
+  }
+}
+
+function updateVisitCount() {
+  document.getElementById('visit-count').textContent = state.visited.length.toString();
+}
+
+/* ============================================================
+   CANDLE RITUAL
+============================================================ */
+function syncCandle() {
+  const flame = document.getElementById('flame');
+  const button = document.getElementById('ritual-button');
+  
+  if (state.candleLit) {
+    flame.classList.add('lit');
+    button.textContent = t('ritualButtonLit');
+    button.disabled = true;
+  } else {
+    flame.classList.remove('lit');
+    button.textContent = t('ritualButton');
+    button.disabled = false;
+  }
+}
+
+/* ============================================================
+   EVENT LISTENERS
+============================================================ */
+document.getElementById('enter-btn').addEventListener('click', () => {
+  const splash = document.getElementById('splash');
+  const app = document.getElementById('app');
+  
+  splash.style.opacity = '0';
+  setTimeout(() => {
+    splash.style.display = 'none';
+    app.style.display = 'flex';
+    requestAnimationFrame(() => {
+      app.style.opacity = '1';
+    });
+  }, 900);
+});
+
+document.getElementById('ritual-button').addEventListener('click', () => {
+  saveState({ candleLit: true });
+  syncCandle();
+  showToast('toastCandleLit');
+});
+
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const newLang = btn.dataset.lang;
+    if (newLang !== currentLang) {
+      currentLang = newLang;
+      saveState({ lang: newLang });
+      applyTranslations();
+      showToast('toastLanguageChanged');
+    }
+  });
+});
+
+document.getElementById('theme-btn').addEventListener('click', () => {
+  const themes = ['night-sky', 'dawn', 'forest', 'ocean'];
+  const currentTheme = document.body.dataset.theme;
+  const currentIndex = themes.indexOf(currentTheme);
+  const nextTheme = themes[(currentIndex + 1) % themes.length];
+  
+  document.body.dataset.theme = nextTheme;
+  saveState({ theme: nextTheme });
+  showToast('toastThemeChanged');
+});
+
+document.getElementById('steward-name-input').addEventListener('change', (e) => {
+  saveState({ stewardName: e.target.value });
+  if (e.target.value) {
+    document.getElementById('steward-status').textContent = e.target.value;
+  }
+});
+
+document.getElementById('brand-logo').addEventListener('click', () => {
+  setTab('overview');
+});
+
+/* ============================================================
+   INITIALIZATION
+============================================================ */
+function init() {
+  // Apply saved preferences
+  if (state.lang) {
+    currentLang = state.lang;
+  }
+  if (state.theme) {
+    document.body.dataset.theme = state.theme;
+  }
+  if (state.stewardName) {
+    document.getElementById('steward-name-input').value = state.stewardName;
+    document.getElementById('steward-status').textContent = state.stewardName;
+  }
+  
+  // Apply translations
+  applyTranslations();
+  
+  // Update counts
+  updateVisitCount();
+  
+  // Sync candle
+  syncCandle();
+  
+  // Set initial tab
+  setTab('overview');
+}
+
+init();
+</script>
+
+</body>
+</html>
