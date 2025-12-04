@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Peace Broadcasts · Global Hope Transmitter</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="description" content="Peace Broadcasts — a prototype console for crafting trauma-informed, de-escalatory public messages during global tension and crisis." />
+  <style>
+    /* =========================================================
+       PEACE BROADCASTS · GLOBAL HOPE TRANSMITTER
+       Standalone module · No external dependencies
+       ========================================================= */
+
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --bg-soft: #0b1120;
+      --fg: #f9fafb;
+      --fg-muted: #9ca3af;
+      --accent: #fbbf24;      /* amber */
+      --accent-soft: rgba(251, 191, 36, 0.16);
+      --accent-2: #38bdf8;    /* sky */
+      --accent-3: #4ade80;    /* green */
+      --border-subtle: rgba(148, 163, 184, 0.38);
+      --danger: #f97373;
+      --success: #4ade80;
+      --shadow-soft: 0 22px 60px rgba(15, 23, 42, 0.92);
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --nav-h: 64px;
+      --transition-fast: 160ms ease-out;
+      --transition-med: 260ms ease-out;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+      --glow-strong: 0 0 26px rgba(251, 191, 36, 0.9);
+    }
+
+    [data-theme="light"] {
+      --bg: #f3f4ff;
+      --bg-elevated: #ffffff;
+      --bg-soft: #e5e7ff;
+      --fg: #020617;
+      --fg-muted: #4b5563;
+      --accent: #f59e0b;
+      --accent-soft: rgba(245, 158, 11, 0.15);
+      --accent-2: #0284c7;
+      --accent-3: #16a34a;
+      --border-subtle: rgba(148, 163, 184, 0.5);
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.18);
+      --glow-strong: 0 0 18px rgba(245, 158, 11, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background:
+        radial-gradient(circle at top, #1e293b 0, #020617 52%, #000 100%);
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .parallax-bg {
+      position: fixed;
+      inset: -25vh -25vw;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(251, 191, 36, 0.24), transparent 60%),
+        radial-gradient(circle at 80% 15%, rgba(56, 189, 248, 0.24), transparent 60%),
+        radial-gradient(circle at 25% 90%, rgba(74, 222, 128, 0.24), transparent 60%),
+        #020617;
+      opacity: 0.98;
+      z-index: -3;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    .star-layer {
+      position: fixed;
+      inset: -25vh -25vw;
+      background-image:
+        radial-gradient(2px 2px at 10% 20%, rgba(248, 250, 252, 0.85), transparent),
+        radial-gradient(1.5px 1.5px at 80% 40%, rgba(148, 163, 184, 0.9), transparent),
+        radial-gradient(1.4px 1.4px at 30% 70%, rgba(148, 163, 184, 0.9), transparent),
+        radial-gradient(1.2px 1.2px at 65% 85%, rgba(226, 232, 240, 0.7), transparent);
+      opacity: 0.7;
+      z-index: -2;
+      mix-blend-mode: screen;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Splash */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, #020617 0, #020617 46%, #000 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      transition: opacity 700ms ease-out, visibility 700ms ease-out;
+    }
+
+    .splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-inner {
+      max-width: 620px;
+      padding: 32px 24px 26px;
+      background: linear-gradient(150deg, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.95));
+      border-radius: 26px;
+      border: 1px solid rgba(248, 250, 252, 0.35);
+      box-shadow: var(--shadow-soft);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .splash-inner::before {
+      content: "";
+      position: absolute;
+      inset: -45%;
+      background:
+        conic-gradient(from 80deg,
+          rgba(251, 191, 36, 0.25),
+          transparent 18%,
+          rgba(56, 189, 248, 0.35),
+          transparent 46%,
+          rgba(74, 222, 128, 0.3),
+          transparent 78%,
+          rgba(250, 250, 250, 0.4)
+        );
+      opacity: 0.5;
+      filter: blur(26px);
+      mix-blend-mode: screen;
+      animation: splashAura 16s linear infinite;
+    }
+
+    .splash-frame {
+      position: relative;
+      border-radius: 22px;
+      padding: 22px 18px 18px;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+      box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.6);
+    }
+
+    .splash-logo {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--accent-2);
+      margin-bottom: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .splash-logo-orb {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 40% 30%, var(--accent), transparent);
+      box-shadow: var(--glow-strong);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .splash-logo-orb::after {
+      content: "";
+      position: absolute;
+      inset: -50%;
+      background:
+        conic-gradient(from 60deg, rgba(251, 191, 36, 0.7), transparent 40%,
+          rgba(56, 189, 248, 0.7), transparent 80%, rgba(74, 222, 128, 0.8));
+      opacity: 0.45;
+      animation: orbSpin 18s linear infinite;
+    }
+
+    .splash-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .splash-subtitle {
+      color: var(--fg-muted);
+      font-size: 0.96rem;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .splash-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--fg-muted);
+      margin-bottom: 14px;
+    }
+
+    .splash-pill span {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .splash-cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .btn-primary {
+      border: none;
+      cursor: pointer;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      background: radial-gradient(circle at top left, var(--accent), var(--accent-2));
+      color: #0f172a;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 20px 50px rgba(251, 191, 36, 0.5);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px) scale(1.01);
+      filter: brightness(1.06);
+      box-shadow: 0 24px 64px rgba(251, 191, 36, 0.65);
+    }
+
+    .btn-primary span.icon {
+      font-size: 1.15rem;
+    }
+
+    .splash-meta {
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+    }
+
+    /* Top Nav */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9), transparent);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .nav {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      min-height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-beacon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(251, 191, 36, 1), transparent 60%),
+        radial-gradient(circle at 70% 30%, rgba(251, 191, 36, 0.9), transparent 60%);
+      box-shadow: var(--glow-strong);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-beacon::after {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        conic-gradient(from 160deg,
+          rgba(251, 191, 36, 0.7),
+          transparent 40%,
+          rgba(56, 189, 248, 0.7),
+          transparent 75%,
+          rgba(74, 222, 128, 0.85));
+      opacity: 0.4;
+      animation: orbSpin 18s linear infinite;
+    }
+
+    .nav-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-title {
+      font-size: 0.96rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .nav-sub {
+      font-size: 0.76rem;
+      color: var(--fg-muted);
+    }
+
+    .nav-center {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .nav-link {
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      color: var(--fg-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .nav-link:hover {
+      background: rgba(15, 23, 42, 0.82);
+      border-color: rgba(148, 163, 184, 0.7);
+      color: var(--fg);
+      transform: translateY(-1px);
+    }
+
+    .nav-link.active {
+      color: var(--accent);
+      border-color: rgba(251, 191, 36, 0.8);
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-chip {
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--fg-muted);
+      cursor: default;
+    }
+
+    .toggle {
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.94);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 0.72rem;
+      color: var(--fg-muted);
+    }
+
+    .toggle-knob {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+
+    /* Layout */
+    .shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 16px 40px;
+    }
+
+    section {
+      margin-bottom: 16px;
+    }
+
+    .section-card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.95));
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      padding: 16px 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-card::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(251, 191, 36, 0.26), transparent 60%),
+        radial-gradient(circle at 85% 10%, rgba(56, 189, 248, 0.26), transparent 60%),
+        radial-gradient(circle at 30% 100%, rgba(74, 222, 128, 0.3), transparent 60%);
+      opacity: 0.42;
+      filter: blur(20px);
+      mix-blend-mode: screen;
+    }
+
+    .card-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      margin-top: 10px;
+      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .hero-kicker {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .hero-title {
+      font-size: clamp(1.5rem, 2rem, 2.3rem);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .hero-subtitle {
+      font-size: 0.95rem;
+      color: var(--fg-muted);
+      max-width: 38rem;
+      margin-bottom: 12px;
+    }
+
+    .hero-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .hero-pill {
+      font-size: 0.76rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--fg-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-pill span {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 0.76rem;
+      color: var(--fg-muted);
+    }
+
+    .hero-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.9);
+    }
+
+    .hero-metrics {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      background: rgba(15, 23, 42, 0.97);
+      border-radius: 16px;
+      padding: 10px 10px 9px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.78rem;
+    }
+
+    .metric-label {
+      color: var(--fg-muted);
+    }
+
+    .metric-value {
+      font-size: 1.02rem;
+      font-weight: 600;
+    }
+
+    .metric-trend {
+      font-size: 0.75rem;
+    }
+
+    .metric-trend.positive {
+      color: var(--success);
+    }
+
+    .metric-trend.calm {
+      color: var(--accent-3);
+    }
+
+    .panel {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+      border-radius: 18px;
+      padding: 14px 13px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .panel-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .panel-title span.icon {
+      font-size: 1.1rem;
+    }
+
+    .panel-body {
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    .panel-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      margin-top: 8px;
+      color: var(--fg-muted);
+    }
+
+    .pill-soft {
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    /* Search */
+    .search-bar {
+      margin: 18px 0 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      min-width: 210px;
+      position: relative;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      padding: 8px 30px 8px 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.97);
+      color: var(--fg);
+      font-size: 0.8rem;
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .search-input-wrap input:focus {
+      border-color: rgba(251, 191, 36, 0.9);
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.4);
+      background: rgba(15, 23, 42, 0.99);
+    }
+
+    .search-input-wrap .icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      color: var(--fg-muted);
+    }
+
+    .search-input-wrap .clear {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      cursor: pointer;
+      color: var(--fg-muted);
+      display: none;
+    }
+
+    .search-input-wrap .clear.visible {
+      display: block;
+    }
+
+    .search-meta {
+      font-size: 0.76rem;
+      color: var(--fg-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .search-meta span {
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .search-match {
+      outline: 1px solid rgba(251, 191, 36, 0.7);
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35);
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.1fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .subcard {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.96));
+      border-radius: 18px;
+      border: 1px solid var(--border-subtle);
+      padding: 14px 13px 12px;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .subcard-inner {
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .section-title span.icon {
+      font-size: 1.1rem;
+    }
+
+    .section-tagline {
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+    }
+
+    .section-body {
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 0.76rem;
+      color: var(--fg-muted);
+    }
+
+    /* Composer */
+    .composer-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+      gap: 10px;
+      margin-top: 8px;
+      align-items: flex-start;
+    }
+
+    .form-group {
+      margin-bottom: 8px;
+    }
+
+    .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--fg-muted);
+      margin-bottom: 4px;
+    }
+
+    textarea,
+    select,
+    input[type="text"] {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.97);
+      color: var(--fg);
+      font-size: 0.82rem;
+      padding: 7px 9px;
+      outline: none;
+      resize: vertical;
+      min-height: 60px;
+      font-family: var(--font-main);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    textarea:focus,
+    select:focus,
+    input[type="text"]:focus {
+      border-color: rgba(251, 191, 36, 0.9);
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.35);
+      background: rgba(15, 23, 42, 0.99);
+    }
+
+    select {
+      min-height: 0;
+      padding: 6px 9px;
+    }
+
+    .tone-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .tone-pill {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.96);
+      padding: 4px 9px;
+      font-size: 0.78rem;
+      color: var(--fg-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .tone-pill:hover {
+      transform: translateY(-1px);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .tone-pill.active {
+      border-color: rgba(251, 191, 36, 0.9);
+      color: var(--accent);
+      background: rgba(24, 24, 35, 0.98);
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.98);
+      color: var(--fg);
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .btn:hover {
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(15, 23, 42, 0.8);
+    }
+
+    .btn-primary-alt {
+      border-color: rgba(251, 191, 36, 0.9);
+      background: radial-gradient(circle at top left, var(--accent), var(--accent-2));
+      color: #020617;
+      box-shadow: 0 18px 46px rgba(251, 191, 36, 0.48);
+    }
+
+    .btn-primary-alt:hover {
+      box-shadow: 0 22px 58px rgba(251, 191, 36, 0.6);
+    }
+
+    .preview {
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      background: rgba(15, 23, 42, 0.97);
+      padding: 8px 9px;
+      font-size: 0.83rem;
+      color: var(--fg);
+      min-height: 120px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-size: 0.78rem;
+      color: var(--fg-muted);
+    }
+
+    .badge {
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    /* Templates & channels */
+    .template-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .template-item {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.55);
+      background: rgba(15, 23, 42, 0.97);
+      padding: 7px 8px;
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .template-item:hover {
+      background: rgba(15, 23, 42, 1);
+      border-color: rgba(251, 191, 36, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .template-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .template-label {
+      font-size: 0.8rem;
+      color: var(--fg);
+    }
+
+    .template-tags {
+      font-size: 0.74rem;
+      color: var(--fg-muted);
+    }
+
+    .channel-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .channel-pill {
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.95);
+      font-size: 0.75rem;
+      color: var(--fg-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .channel-pill span.icon {
+      font-size: 0.9rem;
+    }
+
+    /* Log */
+    .log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.74rem;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 8px 8px 6px;
+      color: var(--fg-muted);
+      max-height: 220px;
+      overflow: auto;
+      line-height: 1.45;
+    }
+
+    .log-line + .log-line {
+      margin-top: 2px;
+    }
+
+    /* Collapsibles */
+    .collapsible-toggle {
+      font-size: 0.75rem;
+      border-radius: 999px;
+      padding: 3px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.94);
+      color: var(--fg-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .collapsible-toggle span.icon {
+      font-size: 0.85rem;
+    }
+
+    .collapsible-content {
+      margin-top: 8px;
+    }
+
+    .collapsible-content[data-collapsed="true"] {
+      display: none;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 0.75rem;
+      color: var(--fg-muted);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    footer strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Print */
+    @media print {
+      .splash,
+      header,
+      .search-bar,
+      .parallax-bg,
+      .star-layer {
+        display: none !important;
+      }
+      body {
+        background: #ffffff;
+        color: #000000;
+      }
+      .shell {
+        max-width: none;
+        padding: 0;
+      }
+      .section-card,
+      .subcard,
+      .panel {
+        box-shadow: none;
+        border-radius: 0;
+        border: none;
+        background: #ffffff;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 880px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .grid,
+      .composer-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .nav-center {
+        display: none;
+      }
+      .shell {
+        padding-inline: 12px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .hero-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .section-card,
+      .subcard {
+        padding: 12px 11px;
+      }
+      .splash-inner {
+        padding: 24px 18px;
+      }
+      .splash-title {
+        font-size: 1.7rem;
+      }
+    }
+
+    /* Animations */
+    @keyframes splashAura {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes orbSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Zero-Harm / Anti-Inversion Note:
+    This Peace Broadcasts module is designed for trauma-informed,
+    de-escalatory public communication in times of tension or crisis.
+    It must never be used for manipulation, incitement, or psychological harm.
+    — Foster + Navi · Peace Lattice · Global Hope Transmitter
+  -->
+
+  <noscript>
+    <div style="background:#111827;color:#e5e7eb;padding:12px;text-align:center;font-family:system-ui,-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;font-size:0.85rem;">
+      This module uses a small amount of JavaScript for composition, logging, search,
+      and local preferences. With JavaScript disabled you can still read the static
+      content, but interactive features will not function.
+    </div>
+  </noscript>
+
+  <div class="parallax-bg" id="parallax-bg"></div>
+  <div class="star-layer" id="star-layer"></div>
+
+  <!-- Splash -->
+  <div class="splash" id="splash">
+    <div class="splash-inner">
+      <div class="splash-frame">
+        <div class="splash-logo">
+          <span class="splash-logo-orb"></span>
+          Peace Lattice · Broadcast Console
+        </div>
+        <div class="splash-title">Global Hope Transmitter</div>
+        <div class="splash-subtitle">
+          A console for drafting steadying, honest, and humane messages
+          during crisis and tension. Designed to calm nervous systems
+          without hiding reality, and to remind people:
+          <strong>everything is going to be more than okay.</strong>
+        </div>
+        <div class="splash-pill">
+          Structural Intent:
+          <span>Stabilisation Without Spin</span>
+        </div>
+        <div class="splash-cta">
+          <button class="btn-primary" id="enterBroadcasts">
+            <span class="icon">📡</span>
+            <span>Enter Peace Broadcasts Console</span>
+          </button>
+          <div class="splash-meta">
+            All settings are stored locally via IndexedDB. No messages leave your device.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="nav">
+      <div class="nav-left">
+        <div class="nav-beacon"></div>
+        <div class="nav-title-wrap">
+          <div class="nav-title">Peace Broadcasts</div>
+          <div class="nav-sub">Global Hope Transmitter · Prototype</div>
+        </div>
+      </div>
+      <div class="nav-center">
+        <button class="nav-link active" data-scroll-target="section-overview">Overview</button>
+        <button class="nav-link" data-scroll-target="section-compose">Compose</button>
+        <button class="nav-link" data-scroll-target="section-templates">Templates</button>
+        <button class="nav-link" data-scroll-target="section-channels">Channels</button>
+        <button class="nav-link" data-scroll-target="section-research">Research & Log</button>
+      </div>
+      <div class="nav-right">
+        <div class="nav-chip">Module · Local Only</div>
+        <button class="toggle" id="themeToggle" type="button">
+          <span class="toggle-knob" id="themeIcon">🌙</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+        <button class="toggle" id="autopilotToggle" type="button">
+          <span class="toggle-knob">💫</span>
+          <span id="autopilotLabel">Autopilot: Off</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell">
+      <!-- Hero -->
+      <section class="hero section-card" id="section-overview" data-search="peace broadcasts crisis communication hope transmitter trauma informed messaging stabilisation">
+        <div class="card-inner">
+          <div class="hero-kicker">Broadcast Console · Overview</div>
+          <h1 class="hero-title">When one calm sentence prevents a thousand spirals.</h1>
+          <p class="hero-subtitle">
+            In high-tension moments, human nervous systems listen more to tone than to detail.
+            This console helps compose messages that are truthful, steady, and kind — designed
+            to lower fear, invite cooperation, and keep people anchored to the possibility of
+            a gentle tomorrow.
+          </p>
+          <div class="hero-row">
+            <div class="hero-pill">
+              Broadcast Mode:
+              <span id="broadcastMode">De-escalation · Public</span>
+            </div>
+            <div class="hero-badge">
+              <span class="hero-badge-dot"></span>
+              Global Nervous System: <strong style="margin-left:4px;">Attentive</strong>
+            </div>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="metric">
+              <div class="metric-label">Message Clarity</div>
+              <div class="metric-value" id="clarityIndex">0.82</div>
+              <div class="metric-trend positive" id="clarityTrend">▲ rising</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Calm Tone Index</div>
+              <div class="metric-value" id="calmIndex">0.79</div>
+              <div class="metric-trend calm" id="calmTrend">≈ steady</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Perceived Safety Signal</div>
+              <div class="metric-value" id="safetyIndex">0.71</div>
+              <div class="metric-trend positive" id="safetyTrend">▲ strengthening</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <div class="panel-title">
+            <span><span class="icon">🛟</span> Design Principles</span>
+            <span class="pill-soft">Do-No-Harm</span>
+          </div>
+          <div class="panel-body">
+            This module assumes:
+            <ul style="margin-top:6px;padding-left:16px;">
+              <li>People deserve <strong>truth without panic</strong>,</li>
+              <li>Leaders need help speaking in <strong>nervous-system friendly</strong> ways, and</li>
+              <li>Every broadcast should answer the question:
+                <em>“What would help people breathe right now?”</em>
+              </li>
+            </ul>
+            Messages built here avoid blame, incitement, and dehumanisation.
+          </div>
+          <div class="panel-row">
+            <span>Lens: <strong>Trauma-Informed</strong></span>
+            <span>Scope: <strong>Global / Local</strong></span>
+          </div>
+        </aside>
+      </section>
+
+      <!-- Search -->
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span class="icon">🔍</span>
+          <input id="searchInput" type="search" placeholder="Search the broadcast console (e.g. ‘children’, ‘frontline’, ‘de-escalation’, ‘hope’)…" />
+          <span class="clear" id="searchClear">✕</span>
+        </div>
+        <div class="search-meta">
+          <span id="searchCount">0 matches</span>
+          <span>Search is client-side · nothing leaves your device.</span>
+        </div>
+      </div>
+
+      <!-- Compose -->
+      <section class="section-card" id="section-compose" data-search="compose crisis situation tone audience template leaders public children frontline global">
+        <div class="card-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-title">
+                <span class="icon">✍️</span>
+                Broadcast Composition Lab
+              </div>
+              <div class="section-tagline">
+                Turn raw situations into steady, humane broadcasts.
+              </div>
+            </div>
+            <button class="collapsible-toggle" data-target="composeNotes">
+              <span class="icon">▾</span>
+              Guidelines
+            </button>
+          </div>
+          <div class="section-body">
+            <p>
+              Start by describing the situation honestly. Then choose who you’re speaking to and
+              which tone is needed. The console will suggest scaffolding: structure, key phrases,
+              and safety anchors that respect people’s intelligence while calming their fears.
+            </p>
+
+            <div class="composer-grid">
+              <div>
+                <div class="form-group">
+                  <div class="label">Situation / Context</div>
+                  <textarea id="situationInput" placeholder="Describe what is happening, in plain language. Example: 'Border tensions between X and Y have escalated, but current intelligence suggests both sides are stepping back from immediate conflict.'"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <div class="label">Primary Audience</div>
+                  <select id="audienceSelect">
+                    <option value="general_public">General Public</option>
+                    <option value="frontline_workers">Frontline Workers & Responders</option>
+                    <option value="children_families">Children & Families</option>
+                    <option value="international_leaders">International Leaders</option>
+                    <option value="local_community">Local Community / City-Level</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <div class="label">Tone Profile</div>
+                  <div class="tone-row" id="toneRow">
+                    <button type="button" class="tone-pill active" data-tone="calm_steady">
+                      <span>🧊</span> Calm & Steady
+                    </button>
+                    <button type="button" class="tone-pill" data-tone="reassuring_warm">
+                      <span>🌤️</span> Reassuring & Warm
+                    </button>
+                    <button type="button" class="tone-pill" data-tone="factual_grounded">
+                      <span>📊</span> Factual & Grounded
+                    </button>
+                    <button type="button" class="tone-pill" data-tone="youth_friendly">
+                      <span>🧸</span> Youth-Friendly
+                    </button>
+                    <button type="button" class="tone-pill" data-tone="frontline_respect">
+                      <span>🛡️</span> Frontline Respect
+                    </button>
+                  </div>
+                </div>
+
+                <div class="btn-row">
+                  <button class="btn btn-primary-alt" id="generateBtn" type="button">
+                    <span>📡</span> Generate Broadcast
+                  </button>
+                  <button class="btn" id="clearBtn" type="button">
+                    <span>🧹</span> Clear
+                  </button>
+                  <button class="btn" id="fillExampleBtn" type="button">
+                    <span>✨</span> Example Situation
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div class="preview-header">
+                  <span>Draft Broadcast Preview</span>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span class="badge" id="previewAudience">Audience: General Public</span>
+                    <button class="btn" id="copyBtn" type="button" style="padding:4px 9px;font-size:0.76rem;">
+                      <span>📋</span> Copy
+                    </button>
+                  </div>
+                </div>
+                <div class="preview" id="previewOutput">
+Your broadcast will appear here. Aim for:
+
+• Plain language  
+• Honest but non-alarmist framing  
+• Clear next steps or reassurances  
+• One sentence that quietly says:
+  “Everything is going to be more than okay.”
+                </div>
+              </div>
+            </div>
+
+            <div class="collapsible-content" id="composeNotes" data-collapsed="true">
+              <p style="margin-top:8px;">
+                Structural hints for humane crisis messaging:
+              </p>
+              <ul style="margin-top:4px;padding-left:16px;">
+                <li><strong>Name</strong> what is happening in simple terms.</li>
+                <li><strong>Normalize</strong> people’s feelings (fear, confusion, anger).</li>
+                <li><strong>Locate</strong> the stabilising forces already in motion.</li>
+                <li><strong>Offer</strong> clear, small actions people can take.</li>
+                <li><strong>Close</strong> with a believable, not exaggerated, hope sentence.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Templates + channels -->
+      <div class="grid">
+        <section class="subcard" id="section-templates" data-search="templates preset messages examples leaders youth frontline reassurance">
+          <div class="subcard-inner">
+            <div class="section-header">
+              <div>
+                <div class="section-title">
+                  <span class="icon">🧩</span>
+                  Preset Broadcast Templates
+                </div>
+                <div class="section-tagline">
+                  Click to load and adapt to your context.
+                </div>
+              </div>
+            </div>
+            <div class="section-body">
+              <p>
+                These are generic scaffolds for different audiences. When you click one, it will
+                update the preview and basic settings. From there, you can personalise and refine
+                for your specific situation.
+              </p>
+
+              <div class="template-list" id="templateList">
+                <!-- populated by JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="subcard" id="section-channels" data-search="channels tv radio sms social media town hall cascade timing">
+          <div class="subcard-inner">
+            <div class="section-header">
+              <div>
+                <div class="section-title">
+                  <span class="icon">📶</span>
+                  Channel Strategy · Message Cascades
+                </div>
+                <div class="section-tagline">
+                  Different channels, same emotional anchor.
+                </div>
+              </div>
+              <button class="collapsible-toggle" data-target="channelNotes">
+                <span class="icon">▾</span>
+                Notes
+              </button>
+            </div>
+            <div class="section-body">
+              <p>
+                The same core message changes flavour depending on the channel, but the emotional
+                spine remains identical: calm honesty, clear care. Use this panel as a checklist
+                for how one broadcast ripples through multiple mediums.
+              </p>
+
+              <div class="channel-row">
+                <div class="channel-pill">
+                  <span class="icon">📺</span>
+                  TV & Live Streams
+                </div>
+                <div class="channel-pill">
+                  <span class="icon">📻</span>
+                  Radio & Audio
+                </div>
+                <div class="channel-pill">
+                  <span class="icon">📱</span>
+                  SMS / Alerts
+                </div>
+                <div class="channel-pill">
+                  <span class="icon">🌐</span>
+                  Social Media Posts
+                </div>
+                <div class="channel-pill">
+                  <span class="icon">🏛️</span>
+                  Town Halls & Pressers
+                </div>
+              </div>
+
+              <div class="collapsible-content" id="channelNotes" data-collapsed="true">
+                <p style="margin-top:8px;">
+                  Example cascade for the same core broadcast:
+                </p>
+                <ul style="margin-top:4px;padding-left:16px;">
+                  <li><strong>TV/live</strong> · full message with body language and visible calm.</li>
+                  <li><strong>Radio/audio</strong> · tone of voice carries safety in the dark.</li>
+                  <li><strong>SMS</strong> · short reassurance + link to fuller context.</li>
+                  <li><strong>Social media</strong> · pinned posts, comments moderated to prevent panic.</li>
+                  <li><strong>Local meetings</strong> · leaders repeat the same phrases in person.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Research + log -->
+      <div class="grid">
+        <section class="subcard" id="section-research" data-search="research trauma informed communication crisis messaging peace psychology de escalation">
+          <div class="subcard-inner">
+            <div class="section-header">
+              <div>
+                <div class="section-title">
+                  <span class="icon">📚</span>
+                  Research Notes · Broadcast Layer
+                </div>
+                <div class="section-tagline">
+                  Why this console looks the way it looks.
+                </div>
+              </div>
+            </div>
+            <div class="section-body">
+              <p>
+                Under the hood, this console is a teaching tool for a future broadcast stack that
+                would connect to live data: social sentiment, hotline volumes, misinformation tides.
+                For now, it simulates what a <em>trauma-informed, de-escalatory</em> system could do:
+                gently nudge leaders away from panic language and toward care.
+              </p>
+              <p style="margin-top:6px;">
+                Conceptually, it touches:
+              </p>
+              <ul style="margin-top:4px;padding-left:16px;">
+                <li>crisis communication and risk perception,</li>
+                <li>peace psychology and de-escalation,</li>
+                <li>nervous-system aware public health messaging,</li>
+                <li>and narrative infrastructure for the Gentle Era.</li>
+              </ul>
+
+              <div style="margin-top:10px;font-size:0.79rem;color:var(--fg-muted);">
+                Structural sanity check for any broadcast generated:
+                <ul style="margin-top:4px;padding-left:16px;">
+                  <li>Does it make vulnerable people feel <strong>safer</strong>?</li>
+                  <li>Does it avoid assigning <strong>collective blame</strong>?</li>
+                  <li>Does it discourage <strong>vigilantism</strong> and retaliation?</li>
+                  <li>Does it reinforce <strong>shared humanity</strong> and interdependence?</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="subcard" data-search="autopilot system log console activity">
+          <div class="subcard-inner">
+            <div class="section-header">
+              <div>
+                <div class="section-title">
+                  <span class="icon">🧾</span>
+                  Autopilot Log · Narrative Console
+                </div>
+                <div class="section-tagline">
+                  Imagined system messages from a future live deployment.
+                </div>
+              </div>
+            </div>
+            <div class="section-body">
+              <p>
+                When Autopilot is enabled, the console periodically emits fictional log entries
+                as if it were monitoring global feeds. These are illustrative only, but they point
+                toward the kinds of checks and nudges a real system might perform.
+              </p>
+              <div class="log" id="autopilotLog" aria-live="polite">
+                <div class="log-line">[boot] Peace Broadcasts console initialised.</div>
+                <div class="log-line">[hint] Enable 💫 Autopilot to simulate gentle checks on tone and content.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        <div>
+          <strong>Zero-Harm Intent:</strong>
+          This console exists to support messaging that reduces fear, honours dignity,
+          and invites cooperation. It is never to be used for propaganda, harassment,
+          or psychological warfare.
+        </div>
+        <div>
+          Structural whisper embedded in every template:
+          <strong>Everything is going to be more than okay.</strong>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    // =====================================================
+    // Peace Broadcasts · Global Hope Transmitter
+    // Local logic · IndexedDB settings · Composer & Autopilot
+    // =====================================================
+    (function () {
+      const root = document.documentElement;
+      const splash = document.getElementById("splash");
+      const enterBtn = document.getElementById("enterBroadcasts");
+      const parallaxBg = document.getElementById("parallax-bg");
+      const starLayer = document.getElementById("star-layer");
+
+      const themeToggle = document.getElementById("themeToggle");
+      const themeIcon = document.getElementById("themeIcon");
+      const themeLabel = document.getElementById("themeLabel");
+
+      const autopilotToggle = document.getElementById("autopilotToggle");
+      const autopilotLabel = document.getElementById("autopilotLabel");
+      const autopilotLog = document.getElementById("autopilotLog");
+
+      const navLinks = Array.from(document.querySelectorAll(".nav-link"));
+      const sections = Array.from(document.querySelectorAll("section.section-card, section.subcard"));
+
+      const searchInput = document.getElementById("searchInput");
+      const searchClear = document.getElementById("searchClear");
+      const searchCount = document.getElementById("searchCount");
+
+      const broadcastModeEl = document.getElementById("broadcastMode");
+
+      const clarityIndexEl = document.getElementById("clarityIndex");
+      const clarityTrendEl = document.getElementById("clarityTrend");
+      const calmIndexEl = document.getElementById("calmIndex");
+      const calmTrendEl = document.getElementById("calmTrend");
+      const safetyIndexEl = document.getElementById("safetyIndex");
+      const safetyTrendEl = document.getElementById("safetyTrend");
+
+      const situationInput = document.getElementById("situationInput");
+      const audienceSelect = document.getElementById("audienceSelect");
+      const toneRow = document.getElementById("toneRow");
+      const generateBtn = document.getElementById("generateBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const fillExampleBtn = document.getElementById("fillExampleBtn");
+      const previewOutput = document.getElementById("previewOutput");
+      const previewAudience = document.getElementById("previewAudience");
+      const copyBtn = document.getElementById("copyBtn");
+
+      const templateListEl = document.getElementById("templateList");
+
+      const dbStatusKey = "peaceBroadcastsDB";
+      let db = null;
+      let autopilot = false;
+      let autopilotTimer = null;
+      let metricsTimer = null;
+      let currentTone = "calm_steady";
+
+      // templates
+      const templates = [
+        {
+          id: "public_tension",
+          label: "Public · Border Tension / Conflict Scare",
+          tags: "general public · de-escalation",
+          audience: "general_public",
+          tone: "calm_steady",
+          body: `We are aware of the situation at the border.
+
+Here is what we can say clearly:
+• There is currently no confirmed large-scale attack underway.
+• Our teams are watching events in real time with international partners.
+• No one is being asked to panic or to move suddenly.
+
+It is normal to feel unsettled when headlines are loud.
+You are allowed to feel anxious — and you are also allowed to rest.
+
+We will keep you updated as decisions are made.
+For now, please continue your routines where it is safe to do so,
+check on people who may be alone, and avoid sharing unverified rumours.
+
+Everything is going to be more than okay.`
+        },
+        {
+          id: "frontline_strain",
+          label: "Frontline · Overwhelmed Responders",
+          tags: "frontline · hospital · emergency",
+          audience: "frontline_workers",
+          tone: "frontline_respect",
+          body: `To everyone working on the front lines:
+
+We see the hours you are giving.
+We know the strain this moment is placing on your bodies, minds, and families.
+
+Here is what is in motion for you:
+• Additional staffing and rotations are being organised.
+• Psychological support teams are being activated.
+• Supplies and equipment are being prioritised for your safety.
+
+For now, your only task is this:
+do the best you can within your limits.
+You are not expected to carry the entire world on your shoulders.
+
+If you feel overwhelmed, it is not a personal failure — it is a natural response
+to an unnatural load. Reach out to your supervisors, peers, or support lines.
+
+Everything is going to be more than okay, and you are part of why.`
+        },
+        {
+          id: "children_uncertainty",
+          label: "Children & Families · Scary News Cycle",
+          tags: "children · parents · schools",
+          audience: "children_families",
+          tone: "youth_friendly",
+          body: `To children and families watching the news:
+
+You may be hearing words like “conflict”, “crisis”, or “emergency”.
+It is okay if those words feel big or confusing.
+
+Here is what the grown-ups are doing:
+• We are talking to each other so problems stay small.
+• We are making plans so families can stay safe.
+• We are asking helpers all over the world to work together.
+
+If you are a child:
+• It is okay to ask questions.
+• It is okay to feel worried.
+• It is okay to still laugh, play, and go to school.
+
+The adults are working so that you can keep being a kid.
+You are not responsible for fixing the world.
+You are allowed to feel safe and loved.
+
+Everything is going to be more than okay.`
+        },
+        {
+          id: "leaders_coordination",
+          label: "Leaders · International Coordination",
+          tags: "leaders · diplomats · high level",
+          audience: "international_leaders",
+          tone: "factual_grounded",
+          body: `To our international partners:
+
+The current situation has increased public anxiety and media speculation.
+Our shared responsibility is to act from wisdom rather than fear.
+
+We propose the following:
+• Immediate high-level communication channels remain open and staffed.
+• All parties commit to language that de-escalates rather than inflames.
+• Joint public statements emphasise coordination, not division.
+
+Domestically, we will be transparent about what we know and what we do not.
+Public trust is a strategic asset; we will not trade it for short-term optics.
+
+Let us demonstrate — together — that global leadership can respond to pressure
+with clarity, empathy, and restraint.
+
+Everything is going to be more than okay, if we make it so.`
+        },
+        {
+          id: "local_community",
+          label: "Local Community · Disruption / Shortages",
+          tags: "local · city · neighbourhood",
+          audience: "local_community",
+          tone: "reassuring_warm",
+          body: `To our community:
+
+You may be noticing changes: empty shelves, longer queues, louder conversations.
+This can feel unsettling, especially when information is incomplete.
+
+Here is what is true right now:
+• Essential services are still operating.
+• Supply chains are strained but not collapsing.
+• Local teams are working to protect those most at risk.
+
+Here is what you can do:
+• Take only what you need so others can do the same.
+• Check on neighbours who may be isolated or unwell.
+• Share verified information from official channels only.
+
+We are stronger when we act like a community, not a crowd.
+Thank you for every small calm choice you make.
+
+Everything is going to be more than okay — and we will get there together.`
+        }
+      ];
+
+      const exampleSituation = `Border tensions between two neighbouring countries have risen after a series of military exercises and political statements. Social media is full of alarmist posts suggesting an imminent large-scale war. Intelligence reports, however, indicate that both sides are quietly signalling a desire to avoid direct conflict, and back-channel talks are underway.`;
+
+      // ========= Parallax =========
+      function handleParallax() {
+        const y = window.scrollY || 0;
+        const slow = -(y * 0.04);
+        const slower = -(y * 0.02);
+        if (parallaxBg) parallaxBg.style.transform = "translate3d(0," + slow + "px,0)";
+        if (starLayer) starLayer.style.transform = "translate3d(0," + slower + "px,0)";
+      }
+      window.addEventListener("scroll", handleParallax, { passive: true });
+
+      // ========= Splash =========
+      function hideSplash() {
+        if (!splash) return;
+        splash.classList.add("hidden");
+      }
+
+      if (enterBtn) {
+        enterBtn.addEventListener("click", () => {
+          hideSplash();
+          logLine("[user] Entered Peace Broadcasts console.");
+          saveSetting("hasEntered", true);
+        });
+      }
+
+      setTimeout(() => {
+        if (!splash.classList.contains("hidden")) {
+          hideSplash();
+          logLine("[auto] Splash dismissed after grace period.");
+        }
+      }, 9000);
+
+      // ========= Nav =========
+      function scrollToTarget(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const offset = window.pageYOffset + rect.top - 86;
+        window.scrollTo({ top: offset, behavior: "smooth" });
+      }
+
+      navLinks.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.getAttribute("data-scroll-target");
+          if (target) scrollToTarget(target);
+        });
+      });
+
+      function updateActiveNav() {
+        const offset = window.pageYOffset;
+        let currentId = "section-overview";
+        sections.forEach(sec => {
+          const rect = sec.getBoundingClientRect();
+          const top = rect.top + window.pageYOffset - 110;
+          if (offset >= top) {
+            currentId = sec.id;
+          }
+        });
+        navLinks.forEach(btn => {
+          const target = btn.getAttribute("data-scroll-target");
+          btn.classList.toggle("active", target === currentId);
+        });
+      }
+      window.addEventListener("scroll", () => updateActiveNav(), { passive: true });
+
+      // ========= IndexedDB =========
+      function openDB() {
+        if (!("indexedDB" in window)) {
+          return;
+        }
+        const request = indexedDB.open(dbStatusKey, 1);
+        request.onupgradeneeded = function (event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains("settings")) {
+            db.createObjectStore("settings", { keyPath: "key" });
+          }
+        };
+        request.onsuccess = function (event) {
+          db = event.target.result;
+          loadSettings();
+        };
+        request.onerror = function () {
+          // silent failure; module still works without persistence
+        };
+      }
+
+      function saveSetting(key, value) {
+        if (!db) return;
+        const tx = db.transaction("settings", "readwrite");
+        const store = tx.objectStore("settings");
+        store.put({ key, value });
+      }
+
+      function loadSettings() {
+        if (!db) return;
+        const tx = db.transaction("settings", "readonly");
+        const store = tx.objectStore("settings");
+        const request = store.getAll();
+        request.onsuccess = function (event) {
+          const items = event.target.result || [];
+          items.forEach(({ key, value }) => {
+            if (key === "theme") applyTheme(value, false);
+            if (key === "autopilot") setAutopilot(Boolean(value), false);
+            if (key === "tone") applyTone(value, false);
+            if (key === "audience") {
+              audienceSelect.value = value;
+              updatePreviewAudienceLabel();
+              updateBroadcastMode();
+            }
+            if (key === "situation") {
+              situationInput.value = value;
+            }
+          });
+        };
+      }
+
+      openDB();
+
+      // ========= Theme =========
+      function detectPreferredTheme() {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+          return "light";
+        }
+        return "dark";
+      }
+
+      function applyTheme(theme, persist = true) {
+        if (theme === "light") {
+          root.setAttribute("data-theme", "light");
+          themeIcon.textContent = "☀️";
+          themeLabel.textContent = "Light";
+        } else {
+          root.setAttribute("data-theme", "dark");
+          themeIcon.textContent = "🌙";
+          themeLabel.textContent = "Dark";
+        }
+        if (persist) saveSetting("theme", theme);
+      }
+
+      themeToggle.addEventListener("click", () => {
+        const current = root.getAttribute("data-theme") === "light" ? "light" : "dark";
+        const next = current === "light" ? "dark" : "light";
+        applyTheme(next);
+        logLine("[user] Theme switched to " + next + ".");
+      });
+
+      const initialTheme = detectPreferredTheme();
+      applyTheme(initialTheme, false);
+
+      // ========= Metrics =========
+      function randBetween(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function formatFloat(num, d) {
+        return num.toFixed(d);
+      }
+
+      function updateHeroMetrics() {
+        const clarity = randBetween(0.8, 0.9);
+        const calm = randBetween(0.76, 0.86);
+        const safety = randBetween(0.7, 0.8);
+
+        clarityIndexEl.textContent = formatFloat(clarity, 2);
+        clarityTrendEl.textContent = clarity > 0.84 ? "▲ rising" : "≈ steady";
+        calmIndexEl.textContent = formatFloat(calm, 2);
+        calmTrendEl.textContent = calm > 0.8 ? "▲ deepening" : "≈ steady";
+        safetyIndexEl.textContent = formatFloat(safety, 2);
+        safetyTrendEl.textContent = safety > 0.75 ? "▲ strengthening" : "≈ steady";
+      }
+
+      metricsTimer = setInterval(updateHeroMetrics, 4200);
+      updateHeroMetrics();
+
+      // ========= Tone selection =========
+      function applyTone(toneId, persist = true) {
+        currentTone = toneId;
+        const buttons = Array.from(toneRow.querySelectorAll(".tone-pill"));
+        buttons.forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.tone === toneId);
+        });
+        if (persist) saveSetting("tone", toneId);
+        updateBroadcastMode();
+      }
+
+      toneRow.addEventListener("click", (e) => {
+        const btn = e.target.closest(".tone-pill");
+        if (!btn) return;
+        const toneId = btn.dataset.tone;
+        applyTone(toneId, true);
+        logLine("[user] Tone profile set to " + toneId + ".");
+      });
+
+      // ========= Broadcast mode label =========
+      function updateBroadcastMode() {
+        const audience = audienceSelect.value;
+        let mode = "De-escalation · Public";
+        if (audience === "frontline_workers") mode = "Stabilisation · Frontline";
+        if (audience === "children_families") mode = "Reassurance · Families";
+        if (audience === "international_leaders") mode = "Cooperation · Leaders";
+        if (audience === "local_community") mode = "Neighbourhood · Calm";
+        broadcastModeEl.textContent = mode;
+      }
+
+      function updatePreviewAudienceLabel() {
+        const map = {
+          general_public: "Audience: General Public",
+          frontline_workers: "Audience: Frontline Workers",
+          children_families: "Audience: Children & Families",
+          international_leaders: "Audience: International Leaders",
+          local_community: "Audience: Local Community"
+        };
+        previewAudience.textContent = map[audienceSelect.value] || "Audience: General Public";
+      }
+
+      audienceSelect.addEventListener("change", () => {
+        saveSetting("audience", audienceSelect.value);
+        updatePreviewAudienceLabel();
+        updateBroadcastMode();
+      });
+
+      updatePreviewAudienceLabel();
+
+      // ========= Templates =========
+      function renderTemplates() {
+        templateListEl.innerHTML = "";
+        templates.forEach(t => {
+          const div = document.createElement("button");
+          div.type = "button";
+          div.className = "template-item";
+          div.dataset.templateId = t.id;
+
+          const meta = document.createElement("div");
+          meta.className = "template-meta";
+          const label = document.createElement("div");
+          label.className = "template-label";
+          label.textContent = t.label;
+          const tags = document.createElement("div");
+          tags.className = "template-tags";
+          tags.textContent = t.tags;
+          meta.appendChild(label);
+          meta.appendChild(tags);
+
+          const badge = document.createElement("div");
+          badge.className = "badge";
+          badge.textContent = "Load";
+
+          div.appendChild(meta);
+          div.appendChild(badge);
+
+          div.addEventListener("click", () => {
+            loadTemplate(t);
+          });
+
+          templateListEl.appendChild(div);
+        });
+      }
+
+      function loadTemplate(t) {
+        audienceSelect.value = t.audience;
+        applyTone(t.tone, true);
+        updatePreviewAudienceLabel();
+        updateBroadcastMode();
+        previewOutput.textContent = t.body;
+        logLine("[template] Loaded preset: " + t.id + ".");
+      }
+
+      renderTemplates();
+
+      // ========= Example filler =========
+      fillExampleBtn.addEventListener("click", () => {
+        situationInput.value = exampleSituation;
+        saveSetting("situation", exampleSituation);
+        logLine("[hint] Example situation loaded into composer.");
+      });
+
+      // ========= Generator =========
+      function generateBroadcast() {
+        const situation = (situationInput.value || "").trim();
+        const audience = audienceSelect.value;
+        const tone = currentTone;
+
+        saveSetting("situation", situation);
+        saveSetting("audience", audience);
+
+        if (!situation) {
+          previewOutput.textContent = "Please describe the situation first. Even a short sentence helps the console shape an appropriate broadcast.";
+          return;
+        }
+
+        const baseIntro = `We are aware of the situation:\n${situation}\n`;
+        const sharedCore = `\nHere is what you should know right now:\n` +
+          `• You are not being asked to panic.\n` +
+          `• People are actively working to prevent the worst outcomes.\n` +
+          `• Information will be shared as clearly and as honestly as possible.\n`;
+
+        let audienceBlock = "";
+        let closing = "";
+
+        if (audience === "general_public") {
+          audienceBlock =
+            `\nIt is normal to feel unsettled when events move quickly.\n` +
+            `You are allowed to feel anxious, and you are allowed to continue your routines where it is safe.\n` +
+            `Please be cautious about rumours and unverified posts; sharing them can increase fear without adding safety.\n`;
+        } else if (audience === "frontline_workers") {
+          audienceBlock =
+            `\nFor those working on the front lines:\n` +
+            `Your effort is seen. You are not expected to carry this moment alone.\n` +
+            `Support systems are being organised so you can rest, rotate, and ask for help.\n`;
+        } else if (audience === "children_families") {
+          audienceBlock =
+            `\nFor children and families:\n` +
+            `It is okay if the words on the news feel big and confusing.\n` +
+            `The adults are working so that you can keep learning, playing, and being together.\n` +
+            `If you have questions, ask a trusted grown-up; you do not have to hold your worries by yourself.\n`;
+        } else if (audience === "international_leaders") {
+          audienceBlock =
+            `\nFor our partners and counterparts:\n` +
+            `Our responsibility is to lower the temperature, not raise it.\n` +
+            `We invite language and decisions that protect civilians, calm markets, and model restraint.\n`;
+        } else if (audience === "local_community") {
+          audienceBlock =
+            `\nTo our local community:\n` +
+            `You may notice small disruptions — queues, shortages, tense conversations.\n` +
+            `This is when neighbourhood kindness matters most: checking on one another, sharing resources, and avoiding panic buying.\n`;
+        }
+
+        if (tone === "calm_steady") {
+          closing =
+            `\nWe will continue to communicate as the situation evolves.\n` +
+            `For now, breathe, stay connected with the people you trust, and remember:\n` +
+            `Everything is going to be more than okay.`;
+        } else if (tone === "reassuring_warm") {
+          closing =
+            `\nYou are not facing this moment alone. There are more people working for your safety than you will ever see on camera.\n` +
+            `Hold onto the small good things in your day, and know that:\n` +
+            `Everything is going to be more than okay — truly.`;
+        } else if (tone === "factual_grounded") {
+          closing =
+            `\nWe will not exaggerate or minimise what is happening.\n` +
+            `You can expect clear updates as we know more, and you can help by staying informed through trusted channels only.\n` +
+            `On the balance of current evidence, everything is on a path to be more than okay.`;
+        } else if (tone === "youth_friendly") {
+          closing =
+            `\nTo young people especially: your main job is still to be young — to learn, to play, to dream.\n` +
+            `The grown-ups will keep doing our job so that you can do yours.\n` +
+            `From where we stand today, everything is going to be more than okay.`;
+        } else if (tone === "frontline_respect") {
+          closing =
+            `\nWe commit to doing everything in our power to reduce your burden, protect your safety, and honour your limits.\n` +
+            `Your work is one of the reasons everything is going to be more than okay.`;
+        }
+
+        const result = baseIntro + sharedCore + audienceBlock + closing;
+        previewOutput.textContent = result;
+        logLine("[compose] New broadcast generated for audience=" + audience + " tone=" + tone + ".");
+      }
+
+      generateBtn.addEventListener("click", generateBroadcast);
+
+      clearBtn.addEventListener("click", () => {
+        situationInput.value = "";
+        previewOutput.textContent =
+`Your broadcast will appear here. Aim for:
+
+• Plain language
+• Honest but non-alarmist framing
+• Clear next steps or reassurances
+• One sentence that quietly says:
+  “Everything is going to be more than okay.”`;
+        saveSetting("situation", "");
+        logLine("[user] Composer cleared.");
+      });
+
+      situationInput.addEventListener("input", () => {
+        saveSetting("situation", situationInput.value);
+      });
+
+      // ========= Copy =========
+      copyBtn.addEventListener("click", async () => {
+        const text = previewOutput.textContent || "";
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            logLine("[copy] Broadcast copied to clipboard.");
+          } else {
+            // fallback
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand("copy"); } catch (e) {}
+            document.body.removeChild(ta);
+            logLine("[copy] Broadcast copied using fallback.");
+          }
+        } catch (e) {
+          logLine("[error] Unable to copy broadcast text.");
+        }
+      });
+
+      // ========= Collapsibles =========
+      const collapsibleButtons = Array.from(document.querySelectorAll(".collapsible-toggle"));
+      collapsibleButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.getAttribute("data-target");
+          if (!targetId) return;
+          const content = document.getElementById(targetId);
+          if (!content) return;
+          const collapsed = content.getAttribute("data-collapsed") === "true";
+          content.setAttribute("data-collapsed", collapsed ? "false" : "true");
+          const icon = btn.querySelector(".icon");
+          if (icon) icon.textContent = collapsed ? "▴" : "▾";
+        });
+      });
+
+      // ========= Search =========
+      function doSearch(value) {
+        const q = (value || "").trim().toLowerCase();
+        let matches = 0;
+        sections.forEach(sec => {
+          sec.classList.remove("search-match");
+          if (!q) return;
+          const text = (sec.getAttribute("data-search") || sec.textContent || "").toLowerCase();
+          if (text.includes(q)) {
+            sec.classList.add("search-match");
+            matches++;
+          }
+        });
+        searchCount.textContent = matches + " match" + (matches === 1 ? "" : "es");
+      }
+
+      searchInput.addEventListener("input", () => {
+        const val = searchInput.value;
+        doSearch(val);
+        searchClear.classList.toggle("visible", !!val);
+      });
+
+      searchClear.addEventListener("click", () => {
+        searchInput.value = "";
+        searchClear.classList.remove("visible");
+        doSearch("");
+      });
+
+      // ========= Log & Autopilot =========
+      function logLine(text) {
+        if (!autopilotLog) return;
+        const div = document.createElement("div");
+        div.className = "log-line";
+        const ts = new Date();
+        const timeStr = ts.toISOString().substring(11, 19);
+        div.textContent = "[" + timeStr + "] " + text;
+        autopilotLog.appendChild(div);
+        autopilotLog.scrollTop = autopilotLog.scrollHeight;
+      }
+
+      function setAutopilot(value, persist = true) {
+        autopilot = !!value;
+        autopilotLabel.textContent = autopilot ? "Autopilot: On" : "Autopilot: Off";
+        if (autopilot) {
+          if (!autopilotTimer) {
+            autopilotTimer = setInterval(runAutopilotTick, 8000);
+          }
+          logLine("[auto] Autopilot enabled (simulation only).");
+        } else {
+          if (autopilotTimer) {
+            clearInterval(autopilotTimer);
+            autopilotTimer = null;
+          }
+          logLine("[auto] Autopilot disabled.");
+        }
+        if (persist) saveSetting("autopilot", autopilot);
+      }
+
+      function runAutopilotTick() {
+        if (!autopilot) return;
+        const hintPool = [
+          "Scanning recent broadcast drafts for blame-heavy phrasing… recommending softer alternatives.",
+          "Checking for messages missing concrete next steps… suggesting one small action for listeners.",
+          "Flagging language that might stigmatise vulnerable groups… proposing inclusive revisions.",
+          "Verifying that each broadcast includes at least one reassurance about safety and future.",
+          "Suggesting leaders acknowledge uncertainty honestly instead of over-promising certainty.",
+          "Simulating public response to current tone… outcome: calm, cautious, but not panicked."
+        ];
+        const choice = hintPool[Math.floor(Math.random() * hintPool.length)];
+        logLine("[autopilot] " + choice);
+      }
+
+      autopilotToggle.addEventListener("click", () => {
+        setAutopilot(!autopilot, true);
+      });
+
+      // start with autopilot off by default
+      setAutopilot(false, false);
+
+      // ========= Init =========
+      window.addEventListener("load", () => {
+        // ensure initial nav state
+        updateActiveNav();
+      });
+    })();
+  </script>
+</body>
+</html>
