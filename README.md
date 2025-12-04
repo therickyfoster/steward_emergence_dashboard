@@ -1,4 +1,9 @@
+# 🌍 Peaceweaver Steward Emergence System
+### **Directory Structure for All 62 Standalone index.html Modules**
 
+This repository contains **62 fully modular, standalone index.html dashboards**, each representing a unique peacebuilding, ecological, cultural, mythic, or socio-technical strategy designed to empower the emergence of **stewards** across borders.
+
+All modules are offline-capable, self-contained, and designed for future AI-assisted expansion.
 
 ---
 
@@ -199,4 +204,3 @@ A single-file public dashboard that:
 - introduces the Peaceweaver vision to the world.
 
 ---
-
