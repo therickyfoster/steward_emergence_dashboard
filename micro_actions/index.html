@@ -1,495 +1,1097 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Micro-Actions Engine — Peace Begins in Kitchens</title>
-
-<style>
+  <meta charset="UTF-8" />
+  <title>The Gentle Era · Long Arc Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="description" content="Gentle Era module — a long-horizon peace trajectory explorer with narrative scenarios, levers, and soft metrics." />
+  <style>
     :root {
-        --bg1: #080b12;
-        --bg2: #0d1019;
-        --glass: rgba(255,255,255,0.08);
-        --fg: #eaeaea;
-        --accent: #8ab4ff;
-        --pink: #ff9acb;
-        --gold: #f5d48b;
-        --green: #69ffb2;
-        --ripple: rgba(255,255,255,0.12);
+      --bg: #020617;
+      --card: #020617;
+      --fg: #e5e7eb;
+      --fg-muted: #9ca3af;
+      --accent: #f97316;
+      --accent-soft: rgba(249, 115, 22, 0.18);
+      --accent-2: #22d3ee;
+      --border-subtle: rgba(148, 163, 184, 0.45);
+      --shadow-soft: 0 22px 60px rgba(15, 23, 42, 0.9);
+      --radius-lg: 20px;
+      --nav-h: 60px;
+      --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif;
+      --transition-fast: 170ms ease-out;
+      --transition-med: 260ms ease-out;
     }
 
-    * { box-sizing: border-box; }
+    [data-theme="light"] {
+      --bg: #f9fafb;
+      --card: #ffffff;
+      --fg: #020617;
+      --fg-muted: #4b5563;
+      --accent: #ea580c;
+      --accent-soft: rgba(234, 88, 12, 0.12);
+      --accent-2: #0891b2;
+      --border-subtle: rgba(148, 163, 184, 0.5);
+      --shadow-soft: 0 16px 38px rgba(15, 23, 42, 0.18);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      scroll-behavior: smooth;
+    }
 
     body {
-        margin: 0;
-        padding: 0;
-        background: radial-gradient(circle at 50% 30%, var(--bg2), var(--bg1));
-        font-family: system-ui, sans-serif;
-        color: var(--fg);
-        overflow: hidden;
+      font-family: var(--font-main);
+      background: radial-gradient(circle at top, #111827 0, #020617 55%, #000 100%);
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    /* Splash Screen */
-    .splash {
-        position: fixed;
-        inset: 0;
-        background: linear-gradient(135deg, #0e121f, #14192a);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 60;
-        opacity: 1;
-        transition: opacity 1.2s ease;
+    .bg-wave {
+      position: fixed;
+      inset: -20vh -20vw;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(249, 115, 22, 0.26), transparent 60%),
+        radial-gradient(circle at 80% 10%, rgba(56, 189, 248, 0.28), transparent 60%),
+        radial-gradient(circle at 15% 90%, rgba(190, 242, 100, 0.26), transparent 60%),
+        #020617;
+      z-index: -2;
+      opacity: 0.95;
+      will-change: transform;
     }
 
-    .splash h1 {
-        font-size: 2.3rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: var(--gold);
+    .bg-dust {
+      position: fixed;
+      inset: -12vh -12vw;
+      background-image:
+        radial-gradient(2px 2px at 10% 20%, rgba(248, 250, 252, 0.8), transparent),
+        radial-gradient(1.5px 1.5px at 70% 40%, rgba(148, 163, 184, 0.8), transparent),
+        radial-gradient(1.3px 1.3px at 30% 75%, rgba(148, 163, 184, 0.8), transparent),
+        radial-gradient(1.2px 1.2px at 80% 85%, rgba(226, 232, 240, 0.8), transparent);
+      mix-blend-mode: screen;
+      opacity: 0.7;
+      z-index: -1;
+      will-change: transform;
     }
 
-    .splash p {
-        font-size: 1.1rem;
-        opacity: 0.7;
-        margin-bottom: 1.8rem;
+    noscript {
+      display: block;
+      background: #111827;
+      color: #e5e7eb;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.8rem;
     }
 
-    .start-btn {
-        padding: 0.7rem 1.7rem;
-        background: var(--accent);
-        color: #fff;
-        font-weight: 600;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(16px);
+      background: linear-gradient(to bottom, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.85), transparent);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.55);
     }
 
-    .start-btn:hover {
-        transform: scale(1.06);
-        box-shadow: 0 0 16px var(--accent);
+    .nav {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 8px 16px;
+      min-height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    /* Parallax Canvas */
-    #canvasBG {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    /* UI Layout */
-    .main {
-        position: relative;
-        z-index: 5;
-        height: 100vh;
-        width: 100vw;
-        display: grid;
-        grid-template-columns: 1fr 380px;
-        grid-template-rows: auto 1fr;
-        grid-template-areas:
-            "header header"
-            "map quest";
-        padding: 1rem;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 1.2s ease;
+    .nav-glyph {
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background:
+        conic-gradient(from 140deg,
+          rgba(249, 115, 22, 0.95),
+          rgba(56, 189, 248, 0.85),
+          rgba(190, 242, 100, 0.9),
+          rgba(249, 115, 22, 0.95));
+      box-shadow: 0 0 18px rgba(249, 115, 22, 0.8);
+      position: relative;
+      overflow: hidden;
     }
 
-    .header {
-        grid-area: header;
-        padding: 0.8rem 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .nav-glyph::after {
+      content: "";
+      position: absolute;
+      inset: 20%;
+      border-radius: inherit;
+      background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.9), transparent 60%);
+      opacity: 0.8;
+      mix-blend-mode: screen;
     }
 
-    .header .title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--gold);
+    .nav-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .header .subtitle {
-        opacity: 0.7;
-        font-size: 0.9rem;
+    .nav-title {
+      font-size: 0.96rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
     }
 
-    /* Map / Ripple Zone */
-    .map {
-        grid-area: map;
-        position: relative;
-        border-radius: 20px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.08);
-        margin-right: 0.7rem;
-        overflow: hidden;
+    .nav-sub {
+      font-size: 0.76rem;
+      color: var(--fg-muted);
     }
 
-    .ripple {
-        position: absolute;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        border: 3px solid var(--ripple);
-        opacity: 0.8;
-        animation: rippleExpand 2.4s ease-out forwards;
-        pointer-events: none;
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    @keyframes rippleExpand {
-        from { transform: scale(1); opacity: 0.6; }
-        to { transform: scale(15); opacity: 0; }
+    .nav-chip {
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: var(--fg-muted);
     }
 
-    /* Quest Log Panel */
-    .quest {
-        grid-area: quest;
-        padding: 1rem;
-        border-radius: 20px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.09);
-        overflow-y: auto;
+    .toggle {
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.96);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 0.74rem;
+      color: var(--fg-muted);
     }
 
-    .quest h3 {
-        margin-top: 0;
-        font-size: 1.3rem;
-        color: var(--pink);
+    .toggle-knob {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--accent);
     }
 
-    .action-card {
-        background: rgba(255,255,255,0.08);
-        padding: 0.9rem;
-        border-radius: 15px;
-        margin-bottom: 0.8rem;
-        border-left: 4px solid var(--accent);
+    /* Layout */
+    .shell {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 16px 16px 30px;
     }
 
-    .action-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 0.3rem;
+    section { margin-bottom: 16px; }
+
+    .card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.94));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      padding: 14px 14px 12px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .complete-btn {
-        margin-top: 0.5rem;
-        background: var(--green);
-        color: #000;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.26), transparent 60%),
+        radial-gradient(circle at 94% 10%, rgba(56, 189, 248, 0.28), transparent 60%),
+        radial-gradient(circle at 40% 100%, rgba(190, 242, 100, 0.28), transparent 60%);
+      opacity: 0.5;
+      filter: blur(20px);
+      mix-blend-mode: screen;
     }
 
-    .complete-btn:hover {
-        transform: scale(1.05);
+    .card-inner {
+      position: relative;
+      z-index: 1;
     }
 
-    /* Streak / Mood indicators */
-    .stats-bar {
-        margin-top: 1.5rem;
-        padding: 0.7rem;
-        background: rgba(255,255,255,0.07);
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.06);
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
     }
 
-    .stat {
-        margin-bottom: 0.4rem;
-        opacity: 0.85;
+    .hero-kicker {
+      font-size: 0.76rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
     }
 
-    .mood-gauge {
-        margin-top: 0.5rem;
-        width: 100%;
-        height: 12px;
-        background: rgba(255,255,255,0.18);
-        border-radius: 10px;
-        overflow: hidden;
+    .hero-title {
+      font-size: clamp(1.4rem, 1.8rem, 2.1rem);
+      font-weight: 700;
+      margin-bottom: 8px;
     }
 
-    .mood-fill {
-        height: 100%;
-        background: var(--gold);
-        width: 38%;
-        transition: width 1s ease;
-        box-shadow: 0 0 12px var(--gold);
+    .hero-sub {
+      font-size: 0.92rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+      margin-bottom: 10px;
     }
 
-    /* Research notes */
-    details {
-        margin-top: 1.2rem;
-        background: rgba(255,255,255,0.05);
-        padding: 0.6rem 0.8rem;
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.06);
-        cursor: pointer;
+    .hero-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
     }
 
-    details summary {
-        font-weight: 600;
-        color: var(--accent);
-        margin-bottom: 0.5rem;
+    .hero-pill {
+      font-size: 0.76rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--fg-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    /* Zero-harm footer */
-    .footer {
-        position: absolute;
-        bottom: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        opacity: 0.5;
-        font-size: 0.75rem;
+    .hero-pill span {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
     }
-</style>
+
+    .hero-metrics {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 0.78rem;
+    }
+
+    .hmetric {
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 8px 9px 7px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hmetric-label { color: var(--fg-muted); }
+
+    .hmetric-value {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .hmetric-note {
+      font-size: 0.74rem;
+      color: var(--accent-2);
+    }
+
+    .hero-side-card {
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 16px;
+      padding: 10px 11px 9px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hero-side-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--fg);
+    }
+
+    .hero-side-title span.icon { font-size: 1.1rem; }
+
+    .chip {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.98);
+      font-size: 0.76rem;
+      color: var(--fg-muted);
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.1fr);
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .section-title span.icon { font-size: 1.1rem; }
+
+    .section-tagline {
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+    }
+
+    .section-body {
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    /* Timeline */
+    .timeline {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .time-pill {
+      padding: 5px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.98);
+      font-size: 0.78rem;
+      color: var(--fg-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .time-pill.active {
+      border-color: rgba(249,115,22,0.9);
+      background: rgba(24, 24, 35, 0.98);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .time-pill span.badge {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.72rem;
+    }
+
+    .time-details {
+      margin-top: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.98);
+      padding: 8px 9px;
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    /* Scenario cards */
+    .scenario-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .scenario {
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      background: rgba(15, 23, 42, 0.98);
+      padding: 7px 8px;
+      font-size: 0.8rem;
+      color: var(--fg-muted);
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .scenario:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.8);
+    }
+
+    .scenario.active {
+      border-color: rgba(249,115,22,0.9);
+      box-shadow: 0 0 0 1px rgba(249,115,22,0.45);
+    }
+
+    .scenario-title {
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 2px;
+    }
+
+    .scenario-meta {
+      font-size: 0.74rem;
+      color: var(--fg-muted);
+    }
+
+    .scenario-tags {
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .stag {
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.96);
+      font-size: 0.7rem;
+      color: var(--fg-muted);
+    }
+
+    .scenario-detail {
+      margin-top: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.98);
+      padding: 8px 9px;
+      font-size: 0.82rem;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    /* Log */
+    .log {
+      margin-top: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.72rem;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.65);
+      padding: 7px 7px 6px;
+      color: var(--fg-muted);
+      max-height: 220px;
+      overflow: auto;
+      line-height: 1.4;
+    }
+
+    .log-line + .log-line { margin-top: 2px; }
+
+    footer {
+      margin-top: 18px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(148, 163, 184, 0.55);
+      font-size: 0.74rem;
+      color: var(--fg-muted);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    footer strong { color: var(--accent); }
+
+    @media (max-width: 880px) {
+      .hero-grid,
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .shell { padding-inline: 12px; }
+    }
+
+    @keyframes waveDrift {
+      0% { transform: translate3d(0,0,0); }
+      100% { transform: translate3d(0,-20px,0); }
+    }
+
+    @keyframes orbSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
-
 <body>
+  <!--
+    Zero-Harm / Anti-Inversion Note:
+    The Gentle Era module explores peaceful futures and stabilising trajectories.
+    It is only for de-escalation, healing, and regenerative planning.
+    — Foster + Navi · Gentle Era Arc
+  -->
 
-<canvas id="canvasBG"></canvas>
+  <noscript>
+    This page uses a small amount of JavaScript for local preferences and scenario selection.
+    With JavaScript disabled you can still read the content, but interactive features will not work.
+  </noscript>
 
-<div class="splash" id="splash">
-    <h1>Micro-Actions Engine</h1>
-    <p>Peace begins in kitchens — and spreads everywhere.</p>
-    <div class="start-btn" onclick="enter()">Begin</div>
-</div>
+  <div class="bg-wave" id="bg-wave"></div>
+  <div class="bg-dust" id="bg-dust"></div>
 
-<div class="main" id="mainUI">
-
-    <div class="header">
-        <div class="title">Daily Peace Micro-Actions</div>
-        <div class="subtitle">Small acts → large stabilization effects</div>
-    </div>
-
-    <div class="map" id="mapArea"></div>
-
-    <div class="quest" id="questPanel">
-        <h3>Your Micro-Actions Today</h3>
-        <div id="actionsContainer"></div>
-
-        <div class="stats-bar">
-            <div class="stat" id="streakText">Streak: 0 days</div>
-            <div class="stat" id="totalText">Total Completed: 0</div>
-            <div class="stat">Community Mood:</div>
-
-            <div class="mood-gauge">
-                <div class="mood-fill" id="moodFill"></div>
-            </div>
+  <header>
+    <div class="nav">
+      <div class="nav-left">
+        <div class="nav-glyph"></div>
+        <div class="nav-title-wrap">
+          <div class="nav-title">The Gentle Era</div>
+          <div class="nav-sub">Long Arc · Peace Trajectory Explorer</div>
         </div>
-
-        <details>
-            <summary>Scientific Basis</summary>
-            • Behavioral contagion theory  
-            • Social cohesion research  
-            • Polyvagal-informed prosocial triggers  
-            • Micro-gesture ripple dynamics  
-            • “Kitchen Peace Model” (home → neighbor → community → region)  
-            • Empathy reinforcement loops  
-        </details>
-
-        <details>
-            <summary>Aphrodite Soft-Power Bonuses</summary>
-            Completing actions with tenderness yields:  
-            • +Higher streak multipliers  
-            • +Greater ripple impact  
-            • +Mood gauge amplification  
-            • +Soft-power blossoms  
-        </details>
-
+      </div>
+      <div class="nav-right">
+        <div class="nav-chip" id="eraLabel">Gentle Era Probability: 0.68</div>
+        <button class="toggle" id="themeToggle" type="button">
+          <span class="toggle-knob" id="themeIcon">🌙</span>
+          <span id="themeLabel">Dark</span>
+        </button>
+        <button class="toggle" id="autopilotToggle" type="button">
+          <span class="toggle-knob">📡</span>
+          <span id="autopilotLabel">Scenario Drift: Manual</span>
+        </button>
+      </div>
     </div>
-</div>
+  </header>
 
-<div class="footer">Zero-Harm | Regenerative Intent Only</div>
+  <main>
+    <div class="shell">
+      <section class="card">
+        <div class="card-inner hero-grid">
+          <div>
+            <div class="hero-kicker">Gentle Era · Overview</div>
+            <h1 class="hero-title">When peace becomes the default setting.</h1>
+            <p class="hero-sub">
+              In the mythic chamber, the Council labels Earth’s highest-probability future
+              “The Gentle Era” — 800+ years shaped not by dominance but by devotion.
+              This module lets you explore that arc as a set of trajectories and design levers.
+            </p>
+            <div class="hero-row">
+              <div class="hero-pill">
+                Era Phase:
+                <span id="eraPhase">Early Stabilisation</span>
+              </div>
+              <div class="hero-pill">
+                Narrative Status:
+                <span id="narrativeStatus">Hope Embedded</span>
+              </div>
+            </div>
+            <div class="hero-metrics">
+              <div class="hmetric">
+                <div class="hmetric-label">Conflict Frequency</div>
+                <div class="hmetric-value" id="conflictMetric">0.41</div>
+                <div class="hmetric-note">lower is better</div>
+              </div>
+              <div class="hmetric">
+                <div class="hmetric-label">Cooperation Bias</div>
+                <div class="hmetric-value" id="coopMetric">0.73</div>
+                <div class="hmetric-note">tipping toward solidarity</div>
+              </div>
+              <div class="hmetric">
+                <div class="hmetric-label">Structural Kindness</div>
+                <div class="hmetric-value" id="kindMetric">0.64</div>
+                <div class="hmetric-note">policy + culture blend</div>
+              </div>
+            </div>
+          </div>
+          <aside class="hero-side-card">
+            <div class="hero-side-title">
+              <span class="icon">🌀</span>
+              From Moment to Millennium
+            </div>
+            <p>
+              A single night of global exhale becomes a century-long design brief:
+              embed peace into law, infrastructure, platforms, education, and myth
+              until violence is the weird exception, not the organising principle.
+            </p>
+            <p>
+              Use this as a thinking tool: each chosen scenario and lever is a
+              story about how your work today echoes forward.
+            </p>
+            <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+              <span class="chip">Storage: Local Preferences</span>
+              <span class="chip" id="dbStatus">DB: initialising…</span>
+            </div>
+          </aside>
+        </div>
+      </section>
 
-<script>
-/* ----------------------------
-   BACKGROUND PARALLAX STARFIELD
------------------------------ */
-const canvas = document.getElementById("canvasBG");
-const ctx = canvas.getContext("2d");
-canvas.width = innerWidth;
-canvas.height = innerHeight;
+      <div class="grid">
+        <!-- Timeline -->
+        <section class="card">
+          <div class="card-inner">
+            <div class="section-header">
+              <div>
+                <div class="section-title">
+                  <span class="icon">📈</span>
+                  Gentle Era Timeline
+                </div>
+                <div class="section-tagline">
+                  Landmark phases across centuries.
+                </div>
+              </div>
+            </div>
+            <div class="section-body">
+              <p>
+                Think of the Gentle Era as a long arc of remembered softness. Each phase
+                marks a structural upgrade: less fear in institutions, more safety in daily life.
+              </p>
+              <div class="timeline" id="timeline"></div>
+              <div class="time-details" id="timeDetails">
+                Select a phase to see how it might feel on the ground.
+              </div>
+            </div>
+          </div>
+        </section>
 
-let stars = [];
-for (let i = 0; i < 120; i++) {
-    stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2,
-        speed: Math.random() * 0.6 + 0.2
-    });
-}
+        <!-- Scenarios -->
+        <section class="card">
+          <div class="card-inner">
+            <div class="section-header">
+              <div>
+                <div class="section-title">
+                  <span class="icon">🗺️</span>
+                  Scenario Explorer
+                </div>
+                <div class="section-tagline">
+                  Different ways the Gentle Era takes root.
+                </div>
+              </div>
+            </div>
+            <div class="section-body">
+              <p>
+                Each scenario combines governance, culture, and tech. They’re not predictions,
+                but design prompts: “What if we built toward this on purpose?”
+              </p>
+              <div class="scenario-list" id="scenarioList"></div>
+              <div class="scenario-detail" id="scenarioDetail">
+                Choose a scenario to see how your work might intersect with it.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
 
-function animateBG() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    stars.forEach(s => {
-        s.y += s.speed;
-        if (s.y > canvas.height) s.y = 0;
-        ctx.fillStyle = "rgba(255,255,255,0.6)";
-        ctx.fillRect(s.x, s.y, s.size, s.size);
-    });
-    requestAnimationFrame(animateBG);
-}
-animateBG();
+      <section class="card">
+        <div class="card-inner">
+          <div class="section-header">
+            <div>
+              <div class="section-title">
+                <span class="icon">📜</span>
+                Era Drift Log · Autopilot
+              </div>
+              <div class="section-tagline">
+                Fictional system messages from a future peace observatory.
+              </div>
+            </div>
+          </div>
+          <div class="section-body">
+            <p>
+              Imagine a future where a global peace observatory pings you with updates:
+              “Gentle Era trajectory strengthened by X; weakened by Y.” For now, this
+              log writes gentle, fictional updates to help you think in epochs instead of days.
+            </p>
+            <div class="log" id="log">
+              <div class="log-line">[boot] Gentle Era console initialised.</div>
+              <div class="log-line">[hint] Toggle 📡 Scenario Drift to let the console surface random futures.</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-/* ----------------------------
-   SPLASH → MAIN
------------------------------ */
-function enter() {
-    splash.style.opacity = 0;
-    setTimeout(() => {
-        splash.style.display = "none";
-        mainUI.style.pointerEvents = "all";
-        mainUI.style.opacity = 1;
-    }, 700);
-}
+      <footer>
+        <div>
+          <strong>Zero-Harm Intent:</strong>
+          This module is for imagining and reinforcing peaceful futures, never for justifying harm now.
+        </div>
+        <div>
+          Structural whisper: <strong>Everything is going to be more than okay, across generations.</strong>
+        </div>
+      </footer>
+    </div>
+  </main>
 
-/* ----------------------------
-   ACTION GENERATOR
------------------------------ */
-const actionList = [
-    "Send a kind message to someone unexpected.",
-    "Let someone merge in traffic.",
-    "Compliment a stranger today.",
-    "Hold the door a little longer.",
-    "Bring an extra snack to share.",
-    "Check on someone who might be lonely.",
-    "Offer help without being asked.",
-    "Clean a shared space quietly.",
-    "Buy an extra coffee for someone behind you.",
-    "Tell a family member you appreciate them.",
-    "Forgive a small annoyance today.",
-    "Wave to a neighbor.",
-    "Share something that inspired you.",
-    "Write a note of gratitude.",
-    "Let someone speak without interruption."
-];
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const bgWave = document.getElementById("bg-wave");
+      const bgDust = document.getElementById("bg-dust");
 
-const actionsContainer = document.getElementById("actionsContainer");
+      const themeToggle = document.getElementById("themeToggle");
+      const themeIcon = document.getElementById("themeIcon");
+      const themeLabel = document.getElementById("themeLabel");
 
-function generateActions() {
-    actionsContainer.innerHTML = "";
-    const chosen = [];
+      const autopilotToggle = document.getElementById("autopilotToggle");
+      const autopilotLabel = document.getElementById("autopilotLabel");
+      const logEl = document.getElementById("log");
 
-    for (let i = 0; i < 4; i++) {
-        let a = actionList[Math.floor(Math.random() * actionList.length)];
-        chosen.push(a);
+      const eraLabel = document.getElementById("eraLabel");
+      const eraPhaseEl = document.getElementById("eraPhase");
+      const narrativeStatusEl = document.getElementById("narrativeStatus");
+      const conflictMetricEl = document.getElementById("conflictMetric");
+      const coopMetricEl = document.getElementById("coopMetric");
+      const kindMetricEl = document.getElementById("kindMetric");
 
-        let card = document.createElement("div");
-        card.className = "action-card";
-        card.innerHTML = `
-            <div class="action-title">${a}</div>
-            <button class="complete-btn" onclick="completeAction(this, '${a.replace(/'/g,"\\'")}')">Complete</button>
-        `;
-        actionsContainer.appendChild(card);
-    }
-}
+      const dbStatusEl = document.getElementById("dbStatus");
 
-generateActions();
+      const timelineEl = document.getElementById("timeline");
+      const timeDetailsEl = document.getElementById("timeDetails");
+      const scenarioListEl = document.getElementById("scenarioList");
+      const scenarioDetailEl = document.getElementById("scenarioDetail");
 
-/* ----------------------------
-   RIPPLES + BLOSSOMS
------------------------------ */
-const mapArea = document.getElementById("mapArea");
+      let db = null;
+      let autopilot = false;
+      let autopilotTimer = null;
 
-function spawnRipple(x, y) {
-    const r = document.createElement("div");
-    r.className = "ripple";
-    r.style.left = x + "px";
-    r.style.top = y + "px";
-    mapArea.appendChild(r);
-
-    setTimeout(() => r.remove(), 2400);
-}
-
-/* ----------------------------
-   INDEXEDDB SETUP
------------------------------ */
-let db;
-const req = indexedDB.open("microActionsDB", 1);
-
-req.onupgradeneeded = e => {
-    db = e.target.result;
-    db.createObjectStore("state", { keyPath: "id" });
-};
-
-req.onsuccess = e => {
-    db = e.target.result;
-    loadState();
-};
-
-/* ----------------------------
-   STATE MANAGEMENT
------------------------------ */
-let streak = 0;
-let total = 0;
-
-function saveState() {
-    const tx = db.transaction("state", "readwrite");
-    const store = tx.objectStore("state");
-    store.put({ id: "progress", streak, total });
-}
-
-function loadState() {
-    const tx = db.transaction("state", "readonly");
-    const store = tx.objectStore("state");
-    const get = store.get("progress");
-
-    get.onsuccess = () => {
-        if (get.result) {
-            streak = get.result.streak;
-            total = get.result.total;
+      const TIMELINE_PHASES = [
+        {
+          id: "night-of-exhale",
+          label: "The Night of Global Exhale",
+          badge: "Year 0–3",
+          desc:
+            "The Stabilisation Night cascades into a handful of early reforms: de-escalation hotlines for diplomats, trauma-aware reporting standards in major newsrooms, and public language that says “we” more than “they”."
+        },
+        {
+          id: "institutional-softening",
+          label: "Institutional Softening Wave",
+          badge: "Year 4–30",
+          desc:
+            "Police, courts, schools, and hospitals adopt safety-first metrics: fewer coerced outcomes, more restorative processes. Budgets begin shifting from punishment to prevention."
+        },
+        {
+          id: "gentle-infra",
+          label: "Gentle Infrastructure Era",
+          badge: "Year 30–120",
+          desc:
+            "Cities are redesigned around social connection and climate repair. Platforms treat emotional safety as core infrastructure. Loneliness and despair indices fall faster than GDP rises."
+        },
+        {
+          id: "deep-memory",
+          label: "Deep Memory Restoration",
+          badge: "Year 120–400",
+          desc:
+            "Generations who never lived through world-scale trauma become historians of violence instead of survivors. Museums, games, and stories keep the memory of harm alive so it is not repeated—but daily life is shaped by something else."
+        },
+        {
+          id: "gentle-default",
+          label: "Gentle Default",
+          badge: "Year 400+",
+          desc:
+            "Violent solutions are culturally bizarre, like bloodletting in medicine. Conflicts still exist, but the first instinct is to repair the relationship, not to destroy the opponent."
         }
-        updateStats();
-    };
-}
+      ];
 
-/* ----------------------------
-   ACTION COMPLETION
------------------------------ */
-function completeAction(btn, text) {
-    btn.disabled = true;
-    btn.innerText = "Done ✔";
+      const SCENARIOS = [
+        {
+          id: "peace-tech-weave",
+          title: "Peace-Tech Weave",
+          meta: "Platforms, games, and tools quietly bias toward de-escalation.",
+          tags: ["platforms", "AI co-pilots", "conflict UX"],
+          detail:
+            "Large platforms bake de-escalation into comment flows; game designers reward cooperation as richly as competition; assistive AIs flag framing that might inflame tensions and suggest gentler alternatives. Nobody forces peace—but the railings lean toward it."
+        },
+        {
+          id: "care-economy-shift",
+          title: "Care Economy Shift",
+          meta: "Care work finally counts as core infrastructure.",
+          tags: ["economics", "care", "labour"],
+          detail:
+            "Governments and cities count caregiving, emotional labour, and community maintenance as part of GDP-equivalent metrics. Funding shifts toward people who hold others together: teachers, nurses, moderators, community organisers. When care workers are safe, everyone is safer."
+        },
+        {
+          id: "multi-polar-kindness",
+          title: "Multi-Polar Kindness Bloc",
+          meta: "Nations compete to host the safest, kindest cities.",
+          tags: ["geopolitics", "soft power", "cities"],
+          detail:
+            "Instead of arms races, nations enter kindness races: who can produce the most liveable, psychologically safe environments for children, refugees, and elders? Visa regimes, trade agreements, and cultural exchanges all reward those who reduce fear instead of amplifying it."
+        },
+        {
+          id: "trauma-literate-governance",
+          title: "Trauma-Literate Governance",
+          meta: "Policy-making assumes nervous systems, not abstractions.",
+          tags: ["policy", "trauma-informed", "health"],
+          detail:
+            "Every major policy proposal must pass a trauma impact review: how will this affect the bodies and brains of the most vulnerable? Crisis response includes therapists and mediators alongside logistics and security."
+        }
+      ];
 
-    total++;
-    streak++;
+      // Parallax-ish
+      function handleScroll() {
+        const y = window.scrollY || 0;
+        if (bgWave) bgWave.style.transform = "translate3d(0," + (y * -0.04) + "px,0)";
+        if (bgDust) bgDust.style.transform = "translate3d(0," + (y * -0.02) + "px,0)";
+      }
+      window.addEventListener("scroll", handleScroll, { passive: true });
 
-    // Ripple at random map location
-    const rect = mapArea.getBoundingClientRect();
-    const randX = Math.random() * rect.width;
-    const randY = Math.random() * rect.height;
-    spawnRipple(randX, randY);
+      // Theme
+      function detectPreferredTheme() {
+        if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+          return "light";
+        }
+        return "dark";
+      }
 
-    // Amplify mood gauge
-    const fill = document.getElementById("moodFill");
-    let current = parseInt(fill.style.width);
-    let bump = Math.floor(Math.random() * 12) + 6;
-    fill.style.width = Math.min(current + bump, 100) + "%";
+      function applyTheme(mode, persist = true) {
+        if (mode === "light") {
+          root.setAttribute("data-theme", "light");
+          themeIcon.textContent = "☀️";
+          themeLabel.textContent = "Light";
+        } else {
+          root.setAttribute("data-theme", "dark");
+          themeIcon.textContent = "🌙";
+          themeLabel.textContent = "Dark";
+        }
+        if (persist) saveSetting("theme", mode);
+      }
 
-    saveState();
-    updateStats();
-}
+      themeToggle.addEventListener("click", () => {
+        const current = root.getAttribute("data-theme") === "light" ? "light" : "dark";
+        const next = current === "light" ? "dark" : "light";
+        applyTheme(next);
+        log("[user] Theme switched to " + next + ".");
+      });
 
-function updateStats() {
-    streakText.innerText = `Streak: ${streak} days`;
-    totalText.innerText = `Total Completed: ${total}`;
-}
+      applyTheme(detectPreferredTheme(), false);
 
-/* ----------------------------
-   DAILY RESET SIMULATION
------------------------------ */
-setInterval(() => {
-    const date = new Date();
-    if (date.getHours() === 0 && date.getMinutes() === 0) {
-        streak = 0;
-        generateActions();
-        saveState();
-        updateStats();
-    }
-}, 60000);
-</script>
+      // DB
+      function openDB() {
+        if (!("indexedDB" in window)) {
+          dbStatusEl.textContent = "DB: unavailable";
+          return;
+        }
+        const req = indexedDB.open("gentleEraDB", 1);
+        req.onupgradeneeded = function (event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains("settings")) {
+            db.createObjectStore("settings", { keyPath: "key" });
+          }
+        };
+        req.onsuccess = function (event) {
+          db = event.target.result;
+          dbStatusEl.textContent = "DB: ready";
+          loadSettings();
+        };
+        req.onerror = function () {
+          dbStatusEl.textContent = "DB: error";
+        };
+      }
 
+      function saveSetting(key, value) {
+        if (!db) return;
+        const tx = db.transaction("settings", "readwrite");
+        tx.objectStore("settings").put({ key, value });
+      }
+
+      function loadSettings() {
+        if (!db) return;
+        const tx = db.transaction("settings", "readonly");
+        tx.objectStore("settings").getAll().onsuccess = function (ev) {
+          const rows = ev.target.result || [];
+          rows.forEach(({ key, value }) => {
+            if (key === "theme") applyTheme(value, false);
+            if (key === "autopilot") setAutopilot(Boolean(value), false);
+            if (key === "phase") selectPhaseById(value, false);
+            if (key === "scenario") selectScenarioById(value, false);
+          });
+        };
+      }
+
+      openDB();
+
+      // Timeline UI
+      function renderTimeline() {
+        timelineEl.innerHTML = "";
+        TIMELINE_PHASES.forEach(phase => {
+          const pill = document.createElement("button");
+          pill.type = "button";
+          pill.className = "time-pill";
+          pill.dataset.phaseId = phase.id;
+          pill.innerHTML = "<span class='badge'>" + phase.badge + "</span> " + phase.label;
+          pill.addEventListener("click", () => selectPhase(phase.id, true));
+          timelineEl.appendChild(pill);
+        });
+      }
+
+      function selectPhaseById(id, persist) {
+        const phase = TIMELINE_PHASES.find(p => p.id === id) || TIMELINE_PHASES[0];
+        timelineEl.querySelectorAll(".time-pill").forEach(p => {
+          p.classList.toggle("active", p.dataset.phaseId === phase.id);
+        });
+        timeDetailsEl.textContent = phase.desc;
+        eraPhaseEl.textContent = phase.label;
+        if (persist) saveSetting("phase", phase.id);
+      }
+
+      function selectPhase(id, persist) {
+        selectPhaseById(id, persist);
+        log("[user] Focused Gentle Era phase: " + id + ".");
+      }
+
+      // Scenario UI
+      function renderScenarios() {
+        scenarioListEl.innerHTML = "";
+        SCENARIOS.forEach(sc => {
+          const div = document.createElement("div");
+          div.className = "scenario";
+          div.dataset.scenarioId = sc.id;
+
+          const title = document.createElement("div");
+          title.className = "scenario-title";
+          title.textContent = sc.title;
+
+          const meta = document.createElement("div");
+          meta.className = "scenario-meta";
+          meta.textContent = sc.meta;
+
+          const tags = document.createElement("div");
+          tags.className = "scenario-tags";
+          (sc.tags || []).forEach(t => {
+            const span = document.createElement("span");
+            span.className = "stag";
+            span.textContent = t;
+            tags.appendChild(span);
+          });
+
+          div.appendChild(title);
+          div.appendChild(meta);
+          div.appendChild(tags);
+          div.addEventListener("click", () => selectScenario(sc.id, true));
+          scenarioListEl.appendChild(div);
+        });
+      }
+
+      function selectScenarioById(id, persist) {
+        const sc = SCENARIOS.find(s => s.id === id) || SCENARIOS[0];
+        scenarioListEl.querySelectorAll(".scenario").forEach(s => {
+          s.classList.toggle("active", s.dataset.scenarioId === sc.id);
+        });
+        scenarioDetailEl.textContent = sc.detail;
+        narrativeStatusEl.textContent = sc.title;
+        if (persist) saveSetting("scenario", sc.id);
+      }
+
+      function selectScenario(id, persist) {
+        selectScenarioById(id, persist);
+        log("[user] Selected future scenario: " + id + ".");
+      }
+
+      // Metrics drift
+      function randBetween(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function formatFloat(n) {
+        return n.toFixed(2);
+      }
+
+      function updateMetrics() {
+        const conflict = randBetween(0.35, 0.48);
+        const coop = randBetween(0.7, 0.8);
+        const kind = randBetween(0.6, 0.72);
+
+        conflictMetricEl.textContent = formatFloat(conflict);
+        coopMetricEl.textContent = formatFloat(coop);
+        kindMetricEl.textContent = formatFloat(kind);
+
+        const eraProb = ((coop + kind - conflict) / 2).toFixed(2);
+        eraLabel.textContent = "Gentle Era Probability: " + eraProb;
+      }
+
+      setInterval(updateMetrics, 5000);
+      updateMetrics();
+
+      // Autopilot
+      function setAutopilot(on, persist = true) {
+        autopilot = on;
+        autopilotLabel.textContent = on ? "Scenario Drift: Auto" : "Scenario Drift: Manual";
+        if (on) {
+          log("[auto] Scenario drift enabled. Periodic future prompts activated.");
+          startAutopilotLoop();
+        } else {
+          log("[auto] Scenario drift disabled.");
+          if (autopilotTimer) clearTimeout(autopilotTimer);
+          autopilotTimer = null;
+        }
+        if (persist) saveSetting("autopilot", on);
+      }
+
+      autopilotToggle.addEventListener("click", () => {
+        setAutopilot(!autopilot, true);
+      });
+
+      function startAutopilotLoop() {
+        if (!autopilot) return;
+        const delay = 16000 + Math.random() * 16000; // 16–32s demo
+        autopilotTimer = setTimeout(() => {
+          if (!autopilot) return;
+          const phase = TIMELINE_PHASES[Math.floor(Math.random() * TIMELINE_PHASES.length)];
+          const sc = SCENARIOS[Math.floor(Math.random() * SCENARIOS.length)];
+          selectPhaseById(phase.id, true);
+          selectScenarioById(sc.id, true);
+          log("[auto] Drifted view to phase '" + phase.id + "' and scenario '" + sc.id + "'.");
+          startAutopilotLoop();
+        }, delay);
+      }
+
+      // Logging
+      function log(message) {
+        if (!logEl) return;
+        const line = document.createElement("div");
+        line.className = "log-line";
+        const t = new Date();
+        const stamp = t.toTimeString().slice(0, 8);
+        line.textContent = "[" + stamp + "] " + message;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      // Init
+      renderTimeline();
+      renderScenarios();
+      // default selections if DB not loaded yet
+      selectPhaseById(TIMELINE_PHASES[0].id, false);
+      selectScenarioById(SCENARIOS[0].id, false);
+    })();
+  </script>
 </body>
 </html>
