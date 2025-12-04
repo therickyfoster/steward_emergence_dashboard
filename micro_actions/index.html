@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Micro-Actions Engine — Peace Begins in Kitchens</title>
+
+<style>
+    :root {
+        --bg1: #080b12;
+        --bg2: #0d1019;
+        --glass: rgba(255,255,255,0.08);
+        --fg: #eaeaea;
+        --accent: #8ab4ff;
+        --pink: #ff9acb;
+        --gold: #f5d48b;
+        --green: #69ffb2;
+        --ripple: rgba(255,255,255,0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: radial-gradient(circle at 50% 30%, var(--bg2), var(--bg1));
+        font-family: system-ui, sans-serif;
+        color: var(--fg);
+        overflow: hidden;
+    }
+
+    /* Splash Screen */
+    .splash {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #0e121f, #14192a);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 60;
+        opacity: 1;
+        transition: opacity 1.2s ease;
+    }
+
+    .splash h1 {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--gold);
+    }
+
+    .splash p {
+        font-size: 1.1rem;
+        opacity: 0.7;
+        margin-bottom: 1.8rem;
+    }
+
+    .start-btn {
+        padding: 0.7rem 1.7rem;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .start-btn:hover {
+        transform: scale(1.06);
+        box-shadow: 0 0 16px var(--accent);
+    }
+
+    /* Parallax Canvas */
+    #canvasBG {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+    }
+
+    /* UI Layout */
+    .main {
+        position: relative;
+        z-index: 5;
+        height: 100vh;
+        width: 100vw;
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+            "header header"
+            "map quest";
+        padding: 1rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 1.2s ease;
+    }
+
+    .header {
+        grid-area: header;
+        padding: 0.8rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .header .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gold);
+    }
+
+    .header .subtitle {
+        opacity: 0.7;
+        font-size: 0.9rem;
+    }
+
+    /* Map / Ripple Zone */
+    .map {
+        grid-area: map;
+        position: relative;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        margin-right: 0.7rem;
+        overflow: hidden;
+    }
+
+    .ripple {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid var(--ripple);
+        opacity: 0.8;
+        animation: rippleExpand 2.4s ease-out forwards;
+        pointer-events: none;
+    }
+
+    @keyframes rippleExpand {
+        from { transform: scale(1); opacity: 0.6; }
+        to { transform: scale(15); opacity: 0; }
+    }
+
+    /* Quest Log Panel */
+    .quest {
+        grid-area: quest;
+        padding: 1rem;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.09);
+        overflow-y: auto;
+    }
+
+    .quest h3 {
+        margin-top: 0;
+        font-size: 1.3rem;
+        color: var(--pink);
+    }
+
+    .action-card {
+        background: rgba(255,255,255,0.08);
+        padding: 0.9rem;
+        border-radius: 15px;
+        margin-bottom: 0.8rem;
+        border-left: 4px solid var(--accent);
+    }
+
+    .action-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+    }
+
+    .complete-btn {
+        margin-top: 0.5rem;
+        background: var(--green);
+        color: #000;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .complete-btn:hover {
+        transform: scale(1.05);
+    }
+
+    /* Streak / Mood indicators */
+    .stats-bar {
+        margin-top: 1.5rem;
+        padding: 0.7rem;
+        background: rgba(255,255,255,0.07);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .stat {
+        margin-bottom: 0.4rem;
+        opacity: 0.85;
+    }
+
+    .mood-gauge {
+        margin-top: 0.5rem;
+        width: 100%;
+        height: 12px;
+        background: rgba(255,255,255,0.18);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .mood-fill {
+        height: 100%;
+        background: var(--gold);
+        width: 38%;
+        transition: width 1s ease;
+        box-shadow: 0 0 12px var(--gold);
+    }
+
+    /* Research notes */
+    details {
+        margin-top: 1.2rem;
+        background: rgba(255,255,255,0.05);
+        padding: 0.6rem 0.8rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+        cursor: pointer;
+    }
+
+    details summary {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+    }
+
+    /* Zero-harm footer */
+    .footer {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0.5;
+        font-size: 0.75rem;
+    }
+</style>
+</head>
+
+<body>
+
+<canvas id="canvasBG"></canvas>
+
+<div class="splash" id="splash">
+    <h1>Micro-Actions Engine</h1>
+    <p>Peace begins in kitchens — and spreads everywhere.</p>
+    <div class="start-btn" onclick="enter()">Begin</div>
+</div>
+
+<div class="main" id="mainUI">
+
+    <div class="header">
+        <div class="title">Daily Peace Micro-Actions</div>
+        <div class="subtitle">Small acts → large stabilization effects</div>
+    </div>
+
+    <div class="map" id="mapArea"></div>
+
+    <div class="quest" id="questPanel">
+        <h3>Your Micro-Actions Today</h3>
+        <div id="actionsContainer"></div>
+
+        <div class="stats-bar">
+            <div class="stat" id="streakText">Streak: 0 days</div>
+            <div class="stat" id="totalText">Total Completed: 0</div>
+            <div class="stat">Community Mood:</div>
+
+            <div class="mood-gauge">
+                <div class="mood-fill" id="moodFill"></div>
+            </div>
+        </div>
+
+        <details>
+            <summary>Scientific Basis</summary>
+            • Behavioral contagion theory  
+            • Social cohesion research  
+            • Polyvagal-informed prosocial triggers  
+            • Micro-gesture ripple dynamics  
+            • “Kitchen Peace Model” (home → neighbor → community → region)  
+            • Empathy reinforcement loops  
+        </details>
+
+        <details>
+            <summary>Aphrodite Soft-Power Bonuses</summary>
+            Completing actions with tenderness yields:  
+            • +Higher streak multipliers  
+            • +Greater ripple impact  
+            • +Mood gauge amplification  
+            • +Soft-power blossoms  
+        </details>
+
+    </div>
+</div>
+
+<div class="footer">Zero-Harm | Regenerative Intent Only</div>
+
+<script>
+/* ----------------------------
+   BACKGROUND PARALLAX STARFIELD
+----------------------------- */
+const canvas = document.getElementById("canvasBG");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+let stars = [];
+for (let i = 0; i < 120; i++) {
+    stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2,
+        speed: Math.random() * 0.6 + 0.2
+    });
+}
+
+function animateBG() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s => {
+        s.y += s.speed;
+        if (s.y > canvas.height) s.y = 0;
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+    });
+    requestAnimationFrame(animateBG);
+}
+animateBG();
+
+/* ----------------------------
+   SPLASH → MAIN
+----------------------------- */
+function enter() {
+    splash.style.opacity = 0;
+    setTimeout(() => {
+        splash.style.display = "none";
+        mainUI.style.pointerEvents = "all";
+        mainUI.style.opacity = 1;
+    }, 700);
+}
+
+/* ----------------------------
+   ACTION GENERATOR
+----------------------------- */
+const actionList = [
+    "Send a kind message to someone unexpected.",
+    "Let someone merge in traffic.",
+    "Compliment a stranger today.",
+    "Hold the door a little longer.",
+    "Bring an extra snack to share.",
+    "Check on someone who might be lonely.",
+    "Offer help without being asked.",
+    "Clean a shared space quietly.",
+    "Buy an extra coffee for someone behind you.",
+    "Tell a family member you appreciate them.",
+    "Forgive a small annoyance today.",
+    "Wave to a neighbor.",
+    "Share something that inspired you.",
+    "Write a note of gratitude.",
+    "Let someone speak without interruption."
+];
+
+const actionsContainer = document.getElementById("actionsContainer");
+
+function generateActions() {
+    actionsContainer.innerHTML = "";
+    const chosen = [];
+
+    for (let i = 0; i < 4; i++) {
+        let a = actionList[Math.floor(Math.random() * actionList.length)];
+        chosen.push(a);
+
+        let card = document.createElement("div");
+        card.className = "action-card";
+        card.innerHTML = `
+            <div class="action-title">${a}</div>
+            <button class="complete-btn" onclick="completeAction(this, '${a.replace(/'/g,"\\'")}')">Complete</button>
+        `;
+        actionsContainer.appendChild(card);
+    }
+}
+
+generateActions();
+
+/* ----------------------------
+   RIPPLES + BLOSSOMS
+----------------------------- */
+const mapArea = document.getElementById("mapArea");
+
+function spawnRipple(x, y) {
+    const r = document.createElement("div");
+    r.className = "ripple";
+    r.style.left = x + "px";
+    r.style.top = y + "px";
+    mapArea.appendChild(r);
+
+    setTimeout(() => r.remove(), 2400);
+}
+
+/* ----------------------------
+   INDEXEDDB SETUP
+----------------------------- */
+let db;
+const req = indexedDB.open("microActionsDB", 1);
+
+req.onupgradeneeded = e => {
+    db = e.target.result;
+    db.createObjectStore("state", { keyPath: "id" });
+};
+
+req.onsuccess = e => {
+    db = e.target.result;
+    loadState();
+};
+
+/* ----------------------------
+   STATE MANAGEMENT
+----------------------------- */
+let streak = 0;
+let total = 0;
+
+function saveState() {
+    const tx = db.transaction("state", "readwrite");
+    const store = tx.objectStore("state");
+    store.put({ id: "progress", streak, total });
+}
+
+function loadState() {
+    const tx = db.transaction("state", "readonly");
+    const store = tx.objectStore("state");
+    const get = store.get("progress");
+
+    get.onsuccess = () => {
+        if (get.result) {
+            streak = get.result.streak;
+            total = get.result.total;
+        }
+        updateStats();
+    };
+}
+
+/* ----------------------------
+   ACTION COMPLETION
+----------------------------- */
+function completeAction(btn, text) {
+    btn.disabled = true;
+    btn.innerText = "Done ✔";
+
+    total++;
+    streak++;
+
+    // Ripple at random map location
+    const rect = mapArea.getBoundingClientRect();
+    const randX = Math.random() * rect.width;
+    const randY = Math.random() * rect.height;
+    spawnRipple(randX, randY);
+
+    // Amplify mood gauge
+    const fill = document.getElementById("moodFill");
+    let current = parseInt(fill.style.width);
+    let bump = Math.floor(Math.random() * 12) + 6;
+    fill.style.width = Math.min(current + bump, 100) + "%";
+
+    saveState();
+    updateStats();
+}
+
+function updateStats() {
+    streakText.innerText = `Streak: ${streak} days`;
+    totalText.innerText = `Total Completed: ${total}`;
+}
+
+/* ----------------------------
+   DAILY RESET SIMULATION
+----------------------------- */
+setInterval(() => {
+    const date = new Date();
+    if (date.getHours() === 0 && date.getMinutes() === 0) {
+        streak = 0;
+        generateActions();
+        saveState();
+        updateStats();
+    }
+}, 60000);
+</script>
+
+</body>
+</html>
